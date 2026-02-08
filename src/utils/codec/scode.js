@@ -1,144 +1,118 @@
 /**
  * S-code (Self-Check Code) encoding/decoding
- * Format: S2-[base64url(array)][CRC-8]
+ * Format: S2-[base64url(bitpacked)][CRC-8]
  *
- * VERSION 2: SCHEMA-INDEXED ARRAYS
- * Fixed-position array format for reliable copy-paste
- * More compact than JSON, more readable than bit-packing
+ * VERSION 2: BIT-PACKED COMPRESSION
+ * Maximum compression using bit-packing
+ * Target: 10-20 character S-codes
+ *
+ * Bit allocation (87 bits total = 11 bytes):
+ * - Header: 24 bits (version:4, chart:4, date:15, diagnostic:1)
+ * - Flags: 4 bits (component presence)
+ * - Cardio: 14 bits (exercise:2, exempt:1, value:11)
+ * - Strength: 9 bits (exercise:1, exempt:1, value:7)
+ * - Core: 14 bits (exercise:2, exempt:1, value:11)
+ * - Body: 22 bits (exempt:1, height:11, waist:10)
+ * Result: 11 bytes + 1 CRC = 12 bytes → 16 base64 chars + 3 prefix = 19 chars
  */
 
 import { encodeBase64url, decodeBase64url } from './base64url.js'
 import { crc8, verifyCrc8 } from './crc8.js'
 import { isDiagnosticPeriod } from '../scoring/constants.js'
+import {
+  BitWriter,
+  BitReader,
+  CARDIO_EX,
+  STRENGTH_EX,
+  CORE_EX,
+  CARDIO_EX_REV,
+  STRENGTH_EX_REV,
+  CORE_EX_REV,
+  DATE_EPOCH,
+} from './bitpack.js'
 
 const SCHEMA_VERSION = 2
-const CHART_VERSION = 0 // v2025_sep provisional
-const EPOCH_DATE = new Date('1950-01-01')
+const CHART_VERSION = 0
 const PREFIX = 'S2-'
 
-// Exercise code mappings (single chars for compactness)
-const CARDIO_EXERCISES = { '2mile_run': 'R', 'hamr': 'H', '2km_walk': 'W' }
-const STRENGTH_EXERCISES = { 'pushups': 'P', 'hrpu': 'H' }
-const CORE_EXERCISES = { 'situps': 'S', 'clrc': 'C', 'plank': 'L' }
-
-const CARDIO_EXERCISES_REV = Object.fromEntries(Object.entries(CARDIO_EXERCISES).map(([k,v]) => [v,k]))
-const STRENGTH_EXERCISES_REV = Object.fromEntries(Object.entries(STRENGTH_EXERCISES).map(([k,v]) => [v,k]))
-const CORE_EXERCISES_REV = Object.fromEntries(Object.entries(CORE_EXERCISES).map(([k,v]) => [v,k]))
-
-/**
- * Calculate days since epoch
- */
 function dateToDays(date) {
   const d = new Date(date)
-  const diff = d.getTime() - EPOCH_DATE.getTime()
+  const diff = d.getTime() - DATE_EPOCH.getTime()
   return Math.floor(diff / (1000 * 60 * 60 * 24))
 }
 
-/**
- * Convert days to date
- */
 function daysToDate(days) {
-  return new Date(EPOCH_DATE.getTime() + days * 24 * 60 * 60 * 1000)
+  return new Date(DATE_EPOCH.getTime() + days * 24 * 60 * 60 * 1000)
 }
 
-/**
- * Encode assessment to S-code using schema-indexed array
- * 
- * Array positions (fixed schema):
- * [0] = schema version (number)
- * [1] = chart version (number)
- * [2] = date (days since 1950)
- * [3] = diagnostic flag (0/1)
- * [4] = cardio exercise code (char) or null
- * [5] = cardio value (number) or null
- * [6] = cardio exempt (0/1) or null
- * [7] = strength exercise code (char) or null
- * [8] = strength value (number) or null
- * [9] = strength exempt (0/1) or null
- * [10] = core exercise code (char) or null
- * [11] = core value (number) or null
- * [12] = core exempt (0/1) or null
- * [13] = body height (tenths) or null
- * [14] = body waist (tenths) or null
- * [15] = body exempt (0/1) or null
- * 
- * @param {object} assessment - Assessment data
- * @returns {string} S-code string
- */
 export function encodeSCode(assessment) {
-  const {
-    date,
-    cardio = null,
-    strength = null,
-    core = null,
-    bodyComp = null,
-  } = assessment
+  const { date, cardio = null, strength = null, core = null, bodyComp = null } = assessment
 
-  if (!date) {
-    throw new Error('Assessment date is required')
-  }
+  if (!date) throw new Error('Assessment date is required')
 
+  const writer = new BitWriter()
   const dateDays = dateToDays(date)
   const diagnostic = isDiagnosticPeriod(date) ? 1 : 0
 
-  // Build fixed-position array
-  const arr = [
-    SCHEMA_VERSION,
-    CHART_VERSION,
-    dateDays,
-    diagnostic,
-    // Cardio (positions 4-6)
-    cardio ? CARDIO_EXERCISES[cardio.exercise] : null,
-    cardio && !cardio.exempt ? Math.round(cardio.value) : null,
-    cardio ? (cardio.exempt ? 1 : 0) : null,
-    // Strength (positions 7-9)
-    strength ? STRENGTH_EXERCISES[strength.exercise] : null,
-    strength && !strength.exempt ? Math.round(strength.value) : null,
-    strength ? (strength.exempt ? 1 : 0) : null,
-    // Core (positions 10-12)
-    core ? CORE_EXERCISES[core.exercise] : null,
-    core && !core.exempt ? Math.round(core.value) : null,
-    core ? (core.exempt ? 1 : 0) : null,
-    // Body comp (positions 13-15)
-    bodyComp && !bodyComp.exempt ? Math.round(bodyComp.heightInches * 10) : null,
-    bodyComp && !bodyComp.exempt ? Math.round(bodyComp.waistInches * 10) : null,
-    bodyComp ? (bodyComp.exempt ? 1 : 0) : null,
-  ]
+  // Header (24 bits)
+  writer.write(SCHEMA_VERSION, 4)
+  writer.write(CHART_VERSION, 4)
+  writer.write(dateDays, 15) // 15 bits: days since 2020 (covers 2020-2110)
+  writer.write(diagnostic, 1)
 
-  // Convert to compact string: comma-separated, nulls as empty
-  const str = arr.map(v => v === null ? '' : v).join(',')
-  
-  // Encode to bytes
-  const encoder = new TextEncoder()
-  const bytes = encoder.encode(str)
+  // Presence flags (4 bits)
+  writer.write(cardio ? 1 : 0, 1)
+  writer.write(strength ? 1 : 0, 1)
+  writer.write(core ? 1 : 0, 1)
+  writer.write(bodyComp ? 1 : 0, 1)
 
-  // Add CRC
+  // Cardio (14 bits if present)
+  if (cardio) {
+    writer.write(CARDIO_EX[cardio.exercise] || 0, 2)
+    writer.write(cardio.exempt ? 1 : 0, 1)
+    if (!cardio.exempt) writer.write(Math.min(Math.round(cardio.value), 2047), 11)
+  }
+
+  // Strength (9 bits if present)
+  if (strength) {
+    writer.write(STRENGTH_EX[strength.exercise] || 0, 1)
+    writer.write(strength.exempt ? 1 : 0, 1)
+    if (!strength.exempt) writer.write(Math.min(Math.round(strength.value), 127), 7)
+  }
+
+  // Core (14 bits if present)
+  if (core) {
+    writer.write(CORE_EX[core.exercise] || 0, 2)
+    writer.write(core.exempt ? 1 : 0, 1)
+    if (!core.exempt) writer.write(Math.min(Math.round(core.value), 2047), 11)
+  }
+
+  // Body comp
+  if (bodyComp) {
+    writer.write(bodyComp.exempt ? 1 : 0, 1)
+    if (!bodyComp.exempt) {
+      const h = Math.min(Math.round(bodyComp.heightInches * 10), 2047)
+      const w = Math.min(Math.round(bodyComp.waistInches * 10), 1023)
+      writer.write(h, 11)
+      writer.write(w, 10)
+    }
+  }
+
+  const bytes = writer.getBytes()
   const crcValue = crc8(bytes)
   const dataWithCrc = new Uint8Array(bytes.length + 1)
   dataWithCrc.set(bytes)
   dataWithCrc[bytes.length] = crcValue
 
-  // Encode to base64url
-  const encoded = encodeBase64url(dataWithCrc)
-
-  return PREFIX + encoded
+  return PREFIX + encodeBase64url(dataWithCrc)
 }
 
-/**
- * Decode S-code to assessment data
- * @param {string} scode - S-code string
- * @returns {object} Assessment data
- */
 export function decodeSCode(scode) {
-  // Check prefix
   if (!scode || !scode.startsWith(PREFIX)) {
     throw new Error('Invalid S-code: missing or incorrect prefix')
   }
 
-  // Extract payload
   const payload = scode.slice(PREFIX.length)
-
-  // Decode from base64url
   let bytes
   try {
     bytes = decodeBase64url(payload)
@@ -146,53 +120,73 @@ export function decodeSCode(scode) {
     throw new Error('Invalid S-code: base64url decode failed')
   }
 
-  // Verify CRC
   if (!verifyCrc8(bytes)) {
     throw new Error('Invalid S-code: checksum mismatch')
   }
 
-  // Remove CRC and decode string
   const dataBytes = bytes.slice(0, -1)
-  const decoder = new TextDecoder()
-  const str = decoder.decode(dataBytes)
+  const reader = new BitReader(dataBytes)
 
-  // Parse array (empty strings become null)
-  const arr = str.split(',').map(v => v === '' ? null : (isNaN(v) ? v : Number(v)))
+  const schemaVersion = reader.read(4)
+  const chartVersion = reader.read(4)
+  const dateDays = reader.read(15) // 15 bits: days since 2020
+  const diagnostic = reader.read(1)
 
-  // Check schema version
-  if (arr[0] > SCHEMA_VERSION) {
+  if (schemaVersion > SCHEMA_VERSION) {
     throw new Error('S-code from newer version. Please update the app.')
   }
 
-  // Extract data from fixed positions
-  const schemaVersion = arr[0]
-  const chartVersion = arr[1]
-  const dateDays = arr[2]
-  const diagnostic = arr[3]
+  const hasCardio = reader.read(1) === 1
+  const hasStrength = reader.read(1) === 1
+  const hasCore = reader.read(1) === 1
+  const hasBodyComp = reader.read(1) === 1
 
-  const cardio = arr[4] !== null ? {
-    exercise: CARDIO_EXERCISES_REV[arr[4]] || '2mile_run',
-    value: arr[5],
-    exempt: arr[6] === 1,
-  } : null
+  let cardio = null
+  if (hasCardio) {
+    const ex = reader.read(2)
+    const exempt = reader.read(1) === 1
+    cardio = {
+      exercise: CARDIO_EX_REV[ex] || '2mile_run',
+      value: exempt ? null : reader.read(11), // 11 bits
+      exempt,
+    }
+  }
 
-  const strength = arr[7] !== null ? {
-    exercise: STRENGTH_EXERCISES_REV[arr[7]] || 'pushups',
-    value: arr[8],
-    exempt: arr[9] === 1,
-  } : null
+  let strength = null
+  if (hasStrength) {
+    const ex = reader.read(1)
+    const exempt = reader.read(1) === 1
+    strength = {
+      exercise: STRENGTH_EX_REV[ex] || 'pushups',
+      value: exempt ? null : reader.read(7),
+      exempt,
+    }
+  }
 
-  const core = arr[10] !== null ? {
-    exercise: CORE_EXERCISES_REV[arr[10]] || 'situps',
-    value: arr[11],
-    exempt: arr[12] === 1,
-  } : null
+  let core = null
+  if (hasCore) {
+    const ex = reader.read(2)
+    const exempt = reader.read(1) === 1
+    core = {
+      exercise: CORE_EX_REV[ex] || 'situps',
+      value: exempt ? null : reader.read(11), // 11 bits
+      exempt,
+    }
+  }
 
-  const bodyComp = arr[13] !== null || arr[14] !== null || arr[15] !== null ? {
-    heightInches: arr[13] !== null ? arr[13] / 10 : null,
-    waistInches: arr[14] !== null ? arr[14] / 10 : null,
-    exempt: arr[15] === 1,
-  } : null
+  let bodyComp = null
+  if (hasBodyComp) {
+    const exempt = reader.read(1) === 1
+    if (!exempt) {
+      bodyComp = {
+        heightInches: reader.read(11) / 10,
+        waistInches: reader.read(10) / 10,
+        exempt: false,
+      }
+    } else {
+      bodyComp = { heightInches: null, waistInches: null, exempt: true }
+    }
+  }
 
   return {
     date: daysToDate(dateDays),
@@ -206,11 +200,6 @@ export function decodeSCode(scode) {
   }
 }
 
-/**
- * Validate S-code format
- * @param {string} scode - S-code string
- * @returns {boolean} True if valid
- */
 export function isValidSCode(scode) {
   try {
     decodeSCode(scode)
