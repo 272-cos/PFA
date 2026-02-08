@@ -29,8 +29,8 @@ function getTier(percentage) {
  *
  * CRITICAL SAFETY NOTE:
  * - Cardio: 2-3×/week with 1-2 rest days between
- * - Strength: 2-3×/week with 48hr rest between sessions
- * - Core: 2-3×/week with 48hr rest between sessions
+ * - Strength: 2-3×/week with two days rest between sessions
+ * - Core: 2-3×/week with two days rest between sessions
  * - NEVER train same muscle group daily - muscles need recovery time
  */
 const RECOMMENDATIONS = {
@@ -74,7 +74,7 @@ const RECOMMENDATIONS = {
   [COMPONENTS.STRENGTH]: {
     [EXERCISES.PUSHUPS]: {
       [TIERS.FAILING]: [
-        'Incline Push-ups: 3×15 on elevated surface (stairs), 2-3×/week with 48hr rest between',
+        'Incline Push-ups: 3×15 on elevated surface (stairs), 2-3×/week with two days rest between',
         'Knee Push-ups: Build to 20-40 reps before progressing, 2-3×/week',
         'Negative Reps: Lower slowly (5 sec) from plank to floor, 2×/week to build strength',
       ],
@@ -91,7 +91,7 @@ const RECOMMENDATIONS = {
     },
     [EXERCISES.HRPU]: {
       [TIERS.FAILING]: [
-        'Dead Stop Practice: Complete hand lift each rep, 3×10, 2-3×/week with 48hr rest',
+        'Dead Stop Practice: Complete hand lift each rep, 3×10, 2-3×/week with two days rest',
         'Regular Push-up Volume: Build to 40+ regular first, 2-3×/week',
         'Split Phases: Practice lowering and pushing separately, 2×/week',
       ],
@@ -111,7 +111,7 @@ const RECOMMENDATIONS = {
   [COMPONENTS.CORE]: {
     [EXERCISES.SITUPS]: {
       [TIERS.FAILING]: [
-        'Crunches: Controlled movement, curl spine, 3×20, 2-3×/week with 48hr rest',
+        'Crunches: Controlled movement, curl spine, 3×20, 2-3×/week with two days rest',
         'Dead Bug: Alternating arm/leg extension, 3×10 each side, 2-3×/week',
         'Form Focus: Don\'t pull neck, breathe out on up, 2-3×/week practice',
       ],
@@ -128,7 +128,7 @@ const RECOMMENDATIONS = {
     },
     [EXERCISES.CLRC]: {
       [TIERS.FAILING]: [
-        'Leg Raises: Lying down, raise to 90°, 3×10, 2-3×/week with 48hr rest',
+        'Leg Raises: Lying down, raise to 90°, 3×10, 2-3×/week with two days rest',
         'Reverse Crunches: Knees to chest, lift hips, 3×15, 2-3×/week',
         'Cross Practice: Master position before adding reps, 2-3×/week',
       ],
@@ -145,7 +145,7 @@ const RECOMMENDATIONS = {
     },
     [EXERCISES.PLANK]: {
       [TIERS.FAILING]: [
-        'Short Holds: 20-30sec × 6 with 30sec rest, 2-3×/week with 48hr rest',
+        'Short Holds: 20-30sec × 6 with 30sec rest, 2-3×/week with two days rest',
         'Progression: Add 5-10sec each week, train 2-3×/week consistently',
         'Form Check: Straight line head to heels, practice 2-3×/week',
       ],
