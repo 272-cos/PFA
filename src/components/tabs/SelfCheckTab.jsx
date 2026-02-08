@@ -196,6 +196,15 @@ export default function SelfCheckTab() {
 
   const isDiagnostic = isDiagnosticPeriod(assessmentDate)
 
+  // Helper function to convert inches to feet and inches
+  const inchesToFeetInches = (inches) => {
+    if (!inches || isNaN(inches)) return ''
+    const totalInches = parseFloat(inches)
+    const feet = Math.floor(totalInches / 12)
+    const remainingInches = Math.round(totalInches % 12)
+    return `${feet}' ${remainingInches}"`
+  }
+
   return (
     <div className="space-y-6">
       {/* Live Score Banner */}
@@ -371,6 +380,11 @@ export default function SelfCheckTab() {
                 step="0.1"
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg disabled:bg-gray-100"
               />
+              {heightInches && !bodyCompExempt && (
+                <p className="text-xs text-gray-500 mt-1">
+                  {inchesToFeetInches(heightInches)}
+                </p>
+              )}
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Waist (inches)</label>
