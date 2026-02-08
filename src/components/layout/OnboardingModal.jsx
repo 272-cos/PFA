@@ -21,11 +21,11 @@ export default function OnboardingModal() {
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
         <h2 className="text-2xl font-bold text-gray-900 mb-2">
-          Welcome to USAF PFA Tracker
+          Welcome to Trajectory
         </h2>
 
         <p className="text-gray-600 mb-4">
-          Track your fitness progress against 2026 PFA standards (50-20-15-15 model).
+          Track your fitness progress and project readiness against 2026 PFA standards.
         </p>
 
         <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6">
