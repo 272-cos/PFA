@@ -1,21 +1,29 @@
 /**
  * S-code (Self-Check Code) encoding/decoding
- * Format: S1-[base64url payload][CRC-8]
+ * Format: S2-[base64url(array)][CRC-8]
  *
- * SIMPLIFIED VERSION for Sprint 2:
- * Contains essential assessment data only
- * Full implementation with all feedback fields in Sprint 3
+ * VERSION 2: SCHEMA-INDEXED ARRAYS
+ * Fixed-position array format for reliable copy-paste
+ * More compact than JSON, more readable than bit-packing
  */
 
 import { encodeBase64url, decodeBase64url } from './base64url.js'
 import { crc8, verifyCrc8 } from './crc8.js'
-// import { EXERCISES } from '../scoring/constants.js'
 import { isDiagnosticPeriod } from '../scoring/constants.js'
 
-const SCHEMA_VERSION = 1
+const SCHEMA_VERSION = 2
 const CHART_VERSION = 0 // v2025_sep provisional
 const EPOCH_DATE = new Date('1950-01-01')
-const PREFIX = 'S1-'
+const PREFIX = 'S2-'
+
+// Exercise code mappings (single chars for compactness)
+const CARDIO_EXERCISES = { '2mile_run': 'R', 'hamr': 'H', '2km_walk': 'W' }
+const STRENGTH_EXERCISES = { 'pushups': 'P', 'hrpu': 'H' }
+const CORE_EXERCISES = { 'situps': 'S', 'clrc': 'C', 'plank': 'L' }
+
+const CARDIO_EXERCISES_REV = Object.fromEntries(Object.entries(CARDIO_EXERCISES).map(([k,v]) => [v,k]))
+const STRENGTH_EXERCISES_REV = Object.fromEntries(Object.entries(STRENGTH_EXERCISES).map(([k,v]) => [v,k]))
+const CORE_EXERCISES_REV = Object.fromEntries(Object.entries(CORE_EXERCISES).map(([k,v]) => [v,k]))
 
 /**
  * Calculate days since epoch
@@ -34,7 +42,26 @@ function daysToDate(days) {
 }
 
 /**
- * Encode assessment to S-code
+ * Encode assessment to S-code using schema-indexed array
+ * 
+ * Array positions (fixed schema):
+ * [0] = schema version (number)
+ * [1] = chart version (number)
+ * [2] = date (days since 1950)
+ * [3] = diagnostic flag (0/1)
+ * [4] = cardio exercise code (char) or null
+ * [5] = cardio value (number) or null
+ * [6] = cardio exempt (0/1) or null
+ * [7] = strength exercise code (char) or null
+ * [8] = strength value (number) or null
+ * [9] = strength exempt (0/1) or null
+ * [10] = core exercise code (char) or null
+ * [11] = core value (number) or null
+ * [12] = core exempt (0/1) or null
+ * [13] = body height (tenths) or null
+ * [14] = body waist (tenths) or null
+ * [15] = body exempt (0/1) or null
+ * 
  * @param {object} assessment - Assessment data
  * @returns {string} S-code string
  */
@@ -54,45 +81,42 @@ export function encodeSCode(assessment) {
   const dateDays = dateToDays(date)
   const diagnostic = isDiagnosticPeriod(date) ? 1 : 0
 
-  // Simplified bit packing (will expand in Sprint 3)
-  // For now: JSON stringify and encode (NOT production-ready, but functional)
-  const data = {
-    v: SCHEMA_VERSION,
-    c: CHART_VERSION,
-    d: dateDays,
-    diag: diagnostic,
-    cardio: cardio ? {
-      ex: cardio.exercise,
-      val: cardio.value,
-      exempt: cardio.exempt || false,
-    } : null,
-    strength: strength ? {
-      ex: strength.exercise,
-      val: strength.value,
-      exempt: strength.exempt || false,
-    } : null,
-    core: core ? {
-      ex: core.exercise,
-      val: core.value,
-      exempt: core.exempt || false,
-    } : null,
-    body: bodyComp ? {
-      h: bodyComp.heightInches,
-      w: bodyComp.waistInches,
-      exempt: bodyComp.exempt || false,
-    } : null,
-  }
+  // Build fixed-position array
+  const arr = [
+    SCHEMA_VERSION,
+    CHART_VERSION,
+    dateDays,
+    diagnostic,
+    // Cardio (positions 4-6)
+    cardio ? CARDIO_EXERCISES[cardio.exercise] : null,
+    cardio && !cardio.exempt ? Math.round(cardio.value) : null,
+    cardio ? (cardio.exempt ? 1 : 0) : null,
+    // Strength (positions 7-9)
+    strength ? STRENGTH_EXERCISES[strength.exercise] : null,
+    strength && !strength.exempt ? Math.round(strength.value) : null,
+    strength ? (strength.exempt ? 1 : 0) : null,
+    // Core (positions 10-12)
+    core ? CORE_EXERCISES[core.exercise] : null,
+    core && !core.exempt ? Math.round(core.value) : null,
+    core ? (core.exempt ? 1 : 0) : null,
+    // Body comp (positions 13-15)
+    bodyComp && !bodyComp.exempt ? Math.round(bodyComp.heightInches * 10) : null,
+    bodyComp && !bodyComp.exempt ? Math.round(bodyComp.waistInches * 10) : null,
+    bodyComp ? (bodyComp.exempt ? 1 : 0) : null,
+  ]
 
-  // Convert to JSON and then to bytes
-  const jsonStr = JSON.stringify(data)
+  // Convert to compact string: comma-separated, nulls as empty
+  const str = arr.map(v => v === null ? '' : v).join(',')
+  
+  // Encode to bytes
   const encoder = new TextEncoder()
-  const jsonBytes = encoder.encode(jsonStr)
+  const bytes = encoder.encode(str)
 
   // Add CRC
-  const crcValue = crc8(jsonBytes)
-  const dataWithCrc = new Uint8Array(jsonBytes.length + 1)
-  dataWithCrc.set(jsonBytes)
-  dataWithCrc[jsonBytes.length] = crcValue
+  const crcValue = crc8(bytes)
+  const dataWithCrc = new Uint8Array(bytes.length + 1)
+  dataWithCrc.set(bytes)
+  dataWithCrc[bytes.length] = crcValue
 
   // Encode to base64url
   const encoded = encodeBase64url(dataWithCrc)
@@ -127,48 +151,59 @@ export function decodeSCode(scode) {
     throw new Error('Invalid S-code: checksum mismatch')
   }
 
-  // Remove CRC
-  const jsonBytes = bytes.slice(0, -1)
-
-  // Decode JSON
+  // Remove CRC and decode string
+  const dataBytes = bytes.slice(0, -1)
   const decoder = new TextDecoder()
-  const jsonStr = decoder.decode(jsonBytes)
-  const data = JSON.parse(jsonStr)
+  const str = decoder.decode(dataBytes)
+
+  // Parse array (empty strings become null)
+  const arr = str.split(',').map(v => v === '' ? null : (isNaN(v) ? v : Number(v)))
 
   // Check schema version
-  if (data.v > SCHEMA_VERSION) {
+  if (arr[0] > SCHEMA_VERSION) {
     throw new Error('S-code from newer version. Please update the app.')
   }
 
-  // Convert back to assessment format
-  const assessment = {
-    date: daysToDate(data.d),
-    isDiagnostic: data.diag === 1,
-    schemaVersion: data.v,
-    chartVersion: data.c,
-    cardio: data.cardio ? {
-      exercise: data.cardio.ex,
-      value: data.cardio.val,
-      exempt: data.cardio.exempt || false,
-    } : null,
-    strength: data.strength ? {
-      exercise: data.strength.ex,
-      value: data.strength.val,
-      exempt: data.strength.exempt || false,
-    } : null,
-    core: data.core ? {
-      exercise: data.core.ex,
-      value: data.core.val,
-      exempt: data.core.exempt || false,
-    } : null,
-    bodyComp: data.body ? {
-      heightInches: data.body.h,
-      waistInches: data.body.w,
-      exempt: data.body.exempt || false,
-    } : null,
-  }
+  // Extract data from fixed positions
+  const schemaVersion = arr[0]
+  const chartVersion = arr[1]
+  const dateDays = arr[2]
+  const diagnostic = arr[3]
 
-  return assessment
+  const cardio = arr[4] !== null ? {
+    exercise: CARDIO_EXERCISES_REV[arr[4]] || '2mile_run',
+    value: arr[5],
+    exempt: arr[6] === 1,
+  } : null
+
+  const strength = arr[7] !== null ? {
+    exercise: STRENGTH_EXERCISES_REV[arr[7]] || 'pushups',
+    value: arr[8],
+    exempt: arr[9] === 1,
+  } : null
+
+  const core = arr[10] !== null ? {
+    exercise: CORE_EXERCISES_REV[arr[10]] || 'situps',
+    value: arr[11],
+    exempt: arr[12] === 1,
+  } : null
+
+  const bodyComp = arr[13] !== null || arr[14] !== null || arr[15] !== null ? {
+    heightInches: arr[13] !== null ? arr[13] / 10 : null,
+    waistInches: arr[14] !== null ? arr[14] / 10 : null,
+    exempt: arr[15] === 1,
+  } : null
+
+  return {
+    date: daysToDate(dateDays),
+    isDiagnostic: diagnostic === 1,
+    schemaVersion,
+    chartVersion,
+    cardio,
+    strength,
+    core,
+    bodyComp,
+  }
 }
 
 /**

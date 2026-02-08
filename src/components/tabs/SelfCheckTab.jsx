@@ -8,7 +8,6 @@ import { encodeSCode } from '../../utils/codec/scode.js'
 import { EXERCISES, COMPONENTS } from '../../utils/scoring/constants.js'
 import { calculateAge, getAgeGroup, isDiagnosticPeriod } from '../../utils/scoring/constants.js'
 import { calculateComponentScore, calculateCompositeScore, calculateWHtR, parseTime } from '../../utils/scoring/scoringEngine.js'
-import { getRecommendations, getTierLabel, getTierEmoji } from '../../utils/recommendations/recommendationEngine.js'
 
 export default function SelfCheckTab() {
   const { demographics, addSCode } = useApp()
@@ -196,6 +195,15 @@ export default function SelfCheckTab() {
 
   const isDiagnostic = isDiagnosticPeriod(assessmentDate)
 
+  // Helper function to convert inches to feet and inches
+  const inchesToFeetInches = (inches) => {
+    if (!inches || isNaN(inches)) return ''
+    const totalInches = parseFloat(inches)
+    const feet = Math.floor(totalInches / 12)
+    const remainingInches = Math.round(totalInches % 12)
+    return `${feet}' ${remainingInches}"`
+  }
+
   return (
     <div className="space-y-6">
       {/* Live Score Banner */}
@@ -364,6 +372,11 @@ export default function SelfCheckTab() {
                 step="0.1"
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg disabled:bg-gray-100"
               />
+              {heightInches && !bodyCompExempt && (
+                <p className="text-xs text-gray-500 mt-1">
+                  {inchesToFeetInches(heightInches)}
+                </p>
+              )}
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Waist (inches)</label>
@@ -421,16 +434,11 @@ export default function SelfCheckTab() {
               </button>
             </div>
             <p className="text-xs text-gray-600 mt-2">
-              Save this code with today's date to track your progress over time.
+              Save this code and check the Trajectory tab for personalized improvement tips!
             </p>
           </div>
         )}
       </div>
-
-      {/* Improvement Tips */}
-      {scores && scores.components.length > 0 && (
-        <ImprovementTips components={scores.components} />
-      )}
     </div>
   )
 }
@@ -471,50 +479,3 @@ function ComponentSection({ title, exempt, onExemptChange, score, children }) {
   )
 }
 
-// Improvement Tips Component
-function ImprovementTips({ components }) {
-  return (
-    <div className="bg-white rounded-lg shadow-md p-6">
-      <h3 className="text-xl font-bold text-gray-900 mb-4">💪 Improvement Tips</h3>
-
-      {components.map((component, idx) => {
-        if (!component.tested || component.exempt) return null
-
-        const recommendations = getRecommendations(
-          component.type,
-          component.exercise,
-          component.percentage,
-          component.exempt
-        )
-
-        if (!recommendations) return null
-
-        const tierLabel = getTierLabel(component.percentage)
-        const tierEmoji = getTierEmoji(component.percentage)
-
-        return (
-          <div key={idx} className="mb-6 last:mb-0">
-            <div className="flex items-center gap-2 mb-2">
-              <span className="text-2xl">{tierEmoji}</span>
-              <h4 className="font-bold text-gray-900 capitalize">{component.type}</h4>
-              <span className={`text-xs px-2 py-1 rounded ${
-                component.percentage < 75 ? 'bg-red-100 text-red-800' :
-                component.percentage <= 80 ? 'bg-yellow-100 text-yellow-800' :
-                'bg-green-100 text-green-800'
-              }`}>
-                {tierLabel}
-              </span>
-            </div>
-            <ul className="space-y-2">
-              {recommendations.map((tip, i) => (
-                <li key={i} className="text-sm text-gray-700 pl-4 border-l-2 border-gray-300">
-                  • {tip}
-                </li>
-              ))}
-            </ul>
-          </div>
-        )
-      })}
-    </div>
-  )
-}

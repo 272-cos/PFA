@@ -147,6 +147,12 @@ localStorage = {
 
 **Output**: Evidence-based recommendation database
 
+**TODO - Video Tutorial Integration:**
+- Include verified YouTube video tutorials in recommendations
+- Link to official form guides, training progressions
+- Vet sources for accuracy (official military channels, certified trainers)
+- Store video IDs in recommendation database for embedding/linking
+
 ## Technical Decisions
 
 ### Component Architecture

@@ -26,6 +26,12 @@ function getTier(percentage) {
 /**
  * Recommendation database
  * Structure: { [component]: { [exercise]: { [tier]: [recommendations] } } }
+ *
+ * CRITICAL SAFETY NOTE:
+ * - Cardio: 2-3×/week with 1-2 rest days between
+ * - Strength: 2-3×/week with two days rest between sessions
+ * - Core: 2-3×/week with two days rest between sessions
+ * - NEVER train same muscle group daily - muscles need recovery time
  */
 const RECOMMENDATIONS = {
   [COMPONENTS.CARDIO]: {
@@ -68,36 +74,36 @@ const RECOMMENDATIONS = {
   [COMPONENTS.STRENGTH]: {
     [EXERCISES.PUSHUPS]: {
       [TIERS.FAILING]: [
-        'Incline Push-ups: Hands on elevated surface (stairs) for 3×15',
-        'Knee Push-ups: Build to 20-40 reps before progressing to regular',
-        'Negative Reps: Lower slowly (5 seconds) from plank to floor, build strength',
+        'Incline Push-ups: 3×15 on elevated surface (stairs), 2-3×/week with two days rest between',
+        'Knee Push-ups: Build to 20-40 reps before progressing, 2-3×/week',
+        'Negative Reps: Lower slowly (5 sec) from plank to floor, 2×/week to build strength',
       ],
       [TIERS.MARGINAL]: [
-        '200 Push-up Challenge: Complete 200 total push-ups in one day (break into sets)',
-        'Pyramid Sets: 1-2-3-4-5-4-3-2-1 reps with 10-second rest between',
-        'Tempo Push-ups: 3-1-3 rhythm (3 sec down, 1 sec hold, 3 sec up)',
+        '200 Push-up Challenge: Complete 200 total in one session (sets as needed), 1×/week max',
+        'Pyramid Sets: 1-2-3-4-5-4-3-2-1 reps with 10sec rest, 2-3×/week',
+        'Tempo Push-ups: 3-1-3 rhythm (3 sec down, 1 hold, 3 up), 2×/week',
       ],
       [TIERS.STRONG]: [
-        'Decline Push-ups: Feet elevated on 12" surface for increased difficulty',
-        'Explosive Push-ups: Push hard enough to lift hands off ground',
-        'Diamond Push-ups: Hands together for tricep emphasis and variety',
+        'Decline Push-ups: Feet elevated 12" for difficulty, 3-4×10-15, 2×/week',
+        'Explosive Push-ups: Push hard to lift hands off ground, 2-3×/week',
+        'Diamond Push-ups: Hands together for tricep emphasis, 2×/week',
       ],
     },
     [EXERCISES.HRPU]: {
       [TIERS.FAILING]: [
-        'Dead Stop Practice: Lower to floor, lift hands completely, push back up',
-        'Regular Push-up Volume: Build to 40+ regular push-ups first',
-        'Split Phases: Practice lowering phase and pushing phase separately',
+        'Dead Stop Practice: Complete hand lift each rep, 3×10, 2-3×/week with two days rest',
+        'Regular Push-up Volume: Build to 40+ regular first, 2-3×/week',
+        'Split Phases: Practice lowering and pushing separately, 2×/week',
       ],
       [TIERS.MARGINAL]: [
-        'Timed Sets: 30-second max effort, 30-second rest × 4 rounds',
-        'Form Drills: Slow HRPUs focusing on complete hand lift and chest touch',
-        'EMOM Training: Every minute on the minute, do 15 HRPUs',
+        'Timed Sets: 30sec max / 30sec rest × 4 rounds, 2-3×/week',
+        'Form Drills: Slow HRPUs with complete hand lift, 2×/week',
+        'EMOM Training: 15 HRPUs every minute × 10min, 2×/week',
       ],
       [TIERS.STRONG]: [
-        '2-Minute Test Practice: Full simulation test once per week',
-        'Overload Sets: 2.5-minute max effort (beyond test duration)',
-        'Pacing Strategy: Experiment with fast vs steady rhythm for optimal reps',
+        '2-Min Test Practice: Full simulation 1×/week only (avoid overtraining)',
+        'Overload Sets: 2.5min max effort beyond test duration, 1×/week',
+        'Pacing Strategy: Test fast vs steady rhythm, 1-2×/week',
       ],
     },
   },
@@ -105,53 +111,53 @@ const RECOMMENDATIONS = {
   [COMPONENTS.CORE]: {
     [EXERCISES.SITUPS]: {
       [TIERS.FAILING]: [
-        'Crunches: Focus on controlled movement, curl spine, 3×20',
-        'Dead Bug: Alternating arm/leg extension while keeping back flat on ground',
-        'Form Focus: Don\'t pull on neck, breathe out on way up, engage core',
+        'Crunches: Controlled movement, curl spine, 3×20, 2-3×/week with two days rest',
+        'Dead Bug: Alternating arm/leg extension, 3×10 each side, 2-3×/week',
+        'Form Focus: Don\'t pull neck, breathe out on up, 2-3×/week practice',
       ],
       [TIERS.MARGINAL]: [
-        '100 Sit-up Challenge: Complete 100 sit-ups daily, break into manageable sets',
-        'Cadence Training: Use metronome at test pace (50-60 bpm) for rhythm',
-        'Pyramid Training: 10-20-30-20-10 reps with minimal rest between sets',
+        '100 Sit-up Challenge: 100 total per session (NOT daily), 2×/week max with rest days',
+        'Cadence Training: Metronome at test pace (50-60 bpm), 2-3×/week',
+        'Pyramid Training: 10-20-30-20-10 with minimal rest, 2×/week',
       ],
       [TIERS.STRONG]: [
-        'Decline Sit-ups: Feet elevated for increased difficulty and ab activation',
-        'Sprint Sit-ups: Max reps in 30 seconds × 4 rounds for explosive power',
-        'Test Simulation: Full 1-minute test twice per week to maintain performance',
+        'Decline Sit-ups: Feet elevated for difficulty, 3×25, 2×/week',
+        'Sprint Sit-ups: Max reps 30sec × 4 rounds, 2×/week',
+        'Test Simulation: Full 1-min test 1-2×/week max (avoid overtraining)',
       ],
     },
     [EXERCISES.CLRC]: {
       [TIERS.FAILING]: [
-        'Leg Raises: Lying on back, raise legs to 90 degrees, 3×10',
-        'Reverse Crunches: Pull knees to chest, lift hips off ground, 3×15',
-        'Cross Practice: Master the cross-leg position before adding reps',
+        'Leg Raises: Lying down, raise to 90°, 3×10, 2-3×/week with two days rest',
+        'Reverse Crunches: Knees to chest, lift hips, 3×15, 2-3×/week',
+        'Cross Practice: Master position before adding reps, 2-3×/week',
       ],
       [TIERS.MARGINAL]: [
-        'High Rep Sets: 30-40 reps × 3 with 1-minute rest for endurance',
-        'Timed Intervals: 45 sec work / 15 sec rest × 8 rounds',
-        'Slow Tempo: 2-1-2 rhythm to build control and form',
+        'High Rep Sets: 30-40 reps × 3 with 1min rest, 2×/week',
+        'Timed Intervals: 45sec work / 15sec rest × 8 rounds, 2×/week',
+        'Slow Tempo: 2-1-2 rhythm for control, 2-3×/week',
       ],
       [TIERS.STRONG]: [
-        'Bicycle Crunches: Alternating elbow to knee for variety and challenge',
-        'V-Ups: Touch hands to toes for full core engagement',
-        '2-Minute+ Tests: Practice beyond test duration to build reserve',
+        'Bicycle Crunches: Alternating elbow to knee, 3×20, 2×/week',
+        'V-Ups: Touch hands to toes for full engagement, 3×15, 2×/week',
+        '2-Min+ Tests: Practice beyond test duration, 1×/week to build reserve',
       ],
     },
     [EXERCISES.PLANK]: {
       [TIERS.FAILING]: [
-        'Short Holds: 20-30 seconds × 6 with 30-second rest, build foundation',
-        'Progression: Add 5-10 seconds to your hold time each week',
-        'Form: Straight line from head to heels, elbows under shoulders',
+        'Short Holds: 20-30sec × 6 with 30sec rest, 2-3×/week with two days rest',
+        'Progression: Add 5-10sec each week, train 2-3×/week consistently',
+        'Form Check: Straight line head to heels, practice 2-3×/week',
       ],
       [TIERS.MARGINAL]: [
-        '2-Minute Goal: Build to continuous 2+ minute hold',
-        'Pyramid Training: 30-60-90-60-30 second holds with short rest',
-        'Mental Strategy: Break plank into 30-second segments mentally',
+        '2-Min Goal: Build to 2+ min continuous hold, 2-3×/week training',
+        'Pyramid Training: 30-60-90-60-30sec holds, 2×/week',
+        'Mental Strategy: Break into 30sec segments, practice 2-3×/week',
       ],
       [TIERS.STRONG]: [
-        'Single-Leg Plank: Lift one leg, hold, alternate for added challenge',
-        'Dynamic Planks: Add hip dips, shoulder taps for stability training',
-        'Plank Complex: Standard + side plank + reverse plank circuit',
+        'Single-Leg Plank: Lift one leg and hold, alternate, 2×/week',
+        'Dynamic Planks: Hip dips, shoulder taps for stability, 2×/week',
+        'Plank Complex: Standard + side + reverse plank circuit, 2×/week',
       ],
     },
   },
