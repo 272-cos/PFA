@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>USAF PFA Tracker</title>
+  <script>
+    // Single Page Application (SPA) redirect for GitHub Pages
+    // This script takes the current URL and redirects to the main index.html
+    // preserving the path and query parameters so the SPA can handle routing
+
+    const pathSegmentsToKeep = 1; // For GitHub Pages: /repo-name/
+
+    const l = window.location;
+    const redirectPath = l.pathname.split('/').slice(0, 1 + pathSegmentsToKeep).join('/') + '/';
+
+    // Redirect to index.html with path encoded in query parameter
+    l.replace(
+      l.protocol + '//' + l.host + redirectPath + '?redirect=' +
+      encodeURIComponent(l.pathname.slice(redirectPath.length - 1) + l.search + l.hash)
+    );
+  </script>
+</head>
+<body>
+  <p>Redirecting to USAF PFA Tracker...</p>
+</body>
+</html>
