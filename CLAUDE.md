@@ -3,9 +3,10 @@
 ## Critical Information
 
 ### User Workflow
-- **USER ALWAYS PUSHES DIRECTLY TO MAIN** - No PR workflow, changes go straight to main branch
-- Never ask user to create PRs or merge via PR process
-- User handles all git operations directly
+- **ALL CHANGES GO THROUGH PULL REQUESTS** - User creates PRs to merge to main
+- Feature branch naming: `claude/setup-repository-[hash]`
+- PRs are reviewed and merged by user
+- Do NOT push directly to main
 
 ### GitHub Pages Deployment Issue (2026-02-08)
 
