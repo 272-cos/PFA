@@ -14,6 +14,7 @@ import {
   isOnboarded,
   setOnboarded,
 } from '../utils/storage/localStorage.js'
+import { decodeDCode } from '../utils/codec/dcode.js'
 
 const AppContext = createContext(null)
 
@@ -39,7 +40,13 @@ export function AppProvider({ children }) {
     const storedDCode = getDCode()
     if (storedDCode) {
       setDCode(storedDCode)
-      // TODO: Decode D-code when codec is implemented
+      // Decode D-code to populate demographics
+      try {
+        const decoded = decodeDCode(storedDCode)
+        setDemographics(decoded)
+      } catch (err) {
+        console.error('Error decoding stored D-code:', err)
+      }
     }
 
     const storedSCodes = getSCodes()
