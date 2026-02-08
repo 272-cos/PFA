@@ -1,22 +1,53 @@
+import { AppProvider, useApp } from './context/AppContext.jsx'
+import Header from './components/layout/Header.jsx'
+import TabNavigation from './components/layout/TabNavigation.jsx'
+import OnboardingModal from './components/layout/OnboardingModal.jsx'
+import ProfileTab from './components/tabs/ProfileTab.jsx'
+import SelfCheckTab from './components/tabs/SelfCheckTab.jsx'
+import ProjectTab from './components/tabs/ProjectTab.jsx'
+import HistoryTab from './components/tabs/HistoryTab.jsx'
+import ReportTab from './components/tabs/ReportTab.jsx'
+
+function AppContent() {
+  const { activeTab, showOnboarding } = useApp()
+
+  // Render active tab content
+  const renderTabContent = () => {
+    switch (activeTab) {
+      case 'profile':
+        return <ProfileTab />
+      case 'selfcheck':
+        return <SelfCheckTab />
+      case 'project':
+        return <ProjectTab />
+      case 'history':
+        return <HistoryTab />
+      case 'report':
+        return <ReportTab />
+      default:
+        return <ProfileTab />
+    }
+  }
+
+  return (
+    <div className="min-h-screen bg-gray-100 flex flex-col">
+      <Header />
+      <TabNavigation />
+
+      <main className="flex-1 container mx-auto px-4 py-6 max-w-4xl">
+        {renderTabContent()}
+      </main>
+
+      {showOnboarding && <OnboardingModal />}
+    </div>
+  )
+}
+
 function App() {
   return (
-    <div className="min-h-screen bg-gray-100">
-      <header className="bg-blue-900 text-white p-4">
-        <h1 className="text-2xl font-bold">USAF PFA Tracker</h1>
-        <p className="text-sm text-yellow-300 mt-1">UNOFFICIAL SELF-CHECK</p>
-      </header>
-
-      <main className="container mx-auto px-4 py-6">
-        <div className="bg-white rounded-lg shadow-md p-6">
-          <p className="text-gray-700">
-            USAF PFA Readiness Tracker - 2026 Standards (50-20-15-15 Model)
-          </p>
-          <p className="text-sm text-gray-500 mt-2">
-            Based on DAFMAN 36-2905 and AFPC provisional charts (Sep 2025)
-          </p>
-        </div>
-      </main>
-    </div>
+    <AppProvider>
+      <AppContent />
+    </AppProvider>
   )
 }
 

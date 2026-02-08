@@ -22,6 +22,8 @@ export default [
         console: 'readonly',
         URL: 'readonly',
         URLSearchParams: 'readonly',
+        localStorage: 'readonly',
+        alert: 'readonly',
       },
     },
     plugins: {
@@ -32,7 +34,7 @@ export default [
     rules: {
       'react-refresh/only-export-components': [
         'warn',
-        { allowConstantExport: true },
+        { allowConstantExport: true, allowExportNames: ['useApp'] },
       ],
       'react/react-in-jsx-scope': 'off',
       'react/jsx-uses-react': 'error',
