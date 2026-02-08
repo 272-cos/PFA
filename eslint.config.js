@@ -4,6 +4,9 @@ import reactHooks from 'eslint-plugin-react-hooks'
 import reactRefresh from 'eslint-plugin-react-refresh'
 
 export default [
+  {
+    ignores: ['dist/**', 'node_modules/**', '*.config.js'],
+  },
   js.configs.recommended,
   {
     files: ['**/*.{js,jsx}'],
@@ -24,6 +27,12 @@ export default [
         URLSearchParams: 'readonly',
         localStorage: 'readonly',
         alert: 'readonly',
+        setTimeout: 'readonly',
+        clearTimeout: 'readonly',
+        btoa: 'readonly',
+        atob: 'readonly',
+        TextEncoder: 'readonly',
+        TextDecoder: 'readonly',
       },
     },
     plugins: {
