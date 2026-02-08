@@ -1,21 +1,30 @@
 /**
  * S-code (Self-Check Code) encoding/decoding
- * Format: S1-[base64url payload][CRC-8]
+ * Format: S2-[base64url payload][CRC-8]
  *
- * SIMPLIFIED VERSION for Sprint 2:
- * Contains essential assessment data only
- * Full implementation with all feedback fields in Sprint 3
+ * VERSION 2: BIT-PACKED COMPRESSION
+ * Reduces code size from ~300 chars to ~40-50 chars
+ * Uses bit-packing instead of JSON for maximum compression
  */
 
 import { encodeBase64url, decodeBase64url } from './base64url.js'
 import { crc8, verifyCrc8 } from './crc8.js'
-// import { EXERCISES } from '../scoring/constants.js'
 import { isDiagnosticPeriod } from '../scoring/constants.js'
+import {
+  BitPacker,
+  BitUnpacker,
+  CARDIO_EXERCISES,
+  STRENGTH_EXERCISES,
+  CORE_EXERCISES,
+  CARDIO_EXERCISES_REV,
+  STRENGTH_EXERCISES_REV,
+  CORE_EXERCISES_REV,
+} from './bitPacker.js'
 
-const SCHEMA_VERSION = 1
+const SCHEMA_VERSION = 2
 const CHART_VERSION = 0 // v2025_sep provisional
 const EPOCH_DATE = new Date('1950-01-01')
-const PREFIX = 'S1-'
+const PREFIX = 'S2-'
 
 /**
  * Calculate days since epoch
@@ -34,7 +43,7 @@ function daysToDate(days) {
 }
 
 /**
- * Encode assessment to S-code
+ * Encode assessment to S-code using bit-packing
  * @param {object} assessment - Assessment data
  * @returns {string} S-code string
  */
@@ -51,48 +60,70 @@ export function encodeSCode(assessment) {
     throw new Error('Assessment date is required')
   }
 
+  const packer = new BitPacker()
+
+  // Pack header (25 bits total)
   const dateDays = dateToDays(date)
   const diagnostic = isDiagnosticPeriod(date) ? 1 : 0
 
-  // Simplified bit packing (will expand in Sprint 3)
-  // For now: JSON stringify and encode (NOT production-ready, but functional)
-  const data = {
-    v: SCHEMA_VERSION,
-    c: CHART_VERSION,
-    d: dateDays,
-    diag: diagnostic,
-    cardio: cardio ? {
-      ex: cardio.exercise,
-      val: cardio.value,
-      exempt: cardio.exempt || false,
-    } : null,
-    strength: strength ? {
-      ex: strength.exercise,
-      val: strength.value,
-      exempt: strength.exempt || false,
-    } : null,
-    core: core ? {
-      ex: core.exercise,
-      val: core.value,
-      exempt: core.exempt || false,
-    } : null,
-    body: bodyComp ? {
-      h: bodyComp.heightInches,
-      w: bodyComp.waistInches,
-      exempt: bodyComp.exempt || false,
-    } : null,
+  packer.pack(SCHEMA_VERSION, 4) // Schema version (0-15)
+  packer.pack(CHART_VERSION, 4)  // Chart version (0-15)
+  packer.pack(dateDays, 16)      // Date (days since 1950, supports until ~2129)
+  packer.pack(diagnostic, 1)     // Diagnostic flag
+
+  // Component presence flags (4 bits)
+  packer.pack(cardio ? 1 : 0, 1)
+  packer.pack(strength ? 1 : 0, 1)
+  packer.pack(core ? 1 : 0, 1)
+  packer.pack(bodyComp ? 1 : 0, 1)
+
+  // Pack cardio (if present): 3 + 1 + 0-12 = 4-16 bits
+  if (cardio) {
+    const exCode = CARDIO_EXERCISES[cardio.exercise] || 0
+    packer.pack(exCode, 3)  // Exercise type (0-7)
+    packer.pack(cardio.exempt ? 1 : 0, 1)
+    if (!cardio.exempt) {
+      packer.pack(Math.round(cardio.value), 12) // Value (0-4095 seconds or shuttles)
+    }
   }
 
-  // Convert to JSON and then to bytes
-  const jsonStr = JSON.stringify(data)
-  const encoder = new TextEncoder()
-  const jsonBytes = encoder.encode(jsonStr)
+  // Pack strength (if present): 2 + 1 + 0-7 = 3-10 bits
+  if (strength) {
+    const exCode = STRENGTH_EXERCISES[strength.exercise] || 0
+    packer.pack(exCode, 2)  // Exercise type (0-3)
+    packer.pack(strength.exempt ? 1 : 0, 1)
+    if (!strength.exempt) {
+      packer.pack(Math.round(strength.value), 7) // Reps (0-127)
+    }
+  }
 
-  // Add CRC
-  const crcValue = crc8(jsonBytes)
-  const dataWithCrc = new Uint8Array(jsonBytes.length + 1)
-  dataWithCrc.set(jsonBytes)
-  dataWithCrc[jsonBytes.length] = crcValue
+  // Pack core (if present): 2 + 1 + 0-12 = 3-15 bits
+  if (core) {
+    const exCode = CORE_EXERCISES[core.exercise] || 0
+    packer.pack(exCode, 2)  // Exercise type (0-3)
+    packer.pack(core.exempt ? 1 : 0, 1)
+    if (!core.exempt) {
+      packer.pack(Math.round(core.value), 12) // Value (0-4095 seconds or reps)
+    }
+  }
+
+  // Pack body comp (if present): 1 + 0-21 = 1-22 bits
+  if (bodyComp) {
+    packer.pack(bodyComp.exempt ? 1 : 0, 1)
+    if (!bodyComp.exempt) {
+      const height = Math.round(bodyComp.heightInches * 10) // Store as tenths
+      const waist = Math.round(bodyComp.waistInches * 10)
+      packer.pack(height, 11) // Height (48.0-110.0 inches in tenths = 480-1100)
+      packer.pack(waist, 10)  // Waist (20.0-90.0 inches in tenths = 200-900)
+    }
+  }
+
+  // Get bytes and add CRC
+  const bytes = packer.getBytes()
+  const crcValue = crc8(bytes)
+  const dataWithCrc = new Uint8Array(bytes.length + 1)
+  dataWithCrc.set(bytes)
+  dataWithCrc[bytes.length] = crcValue
 
   // Encode to base64url
   const encoded = encodeBase64url(dataWithCrc)
@@ -127,48 +158,92 @@ export function decodeSCode(scode) {
     throw new Error('Invalid S-code: checksum mismatch')
   }
 
-  // Remove CRC
-  const jsonBytes = bytes.slice(0, -1)
+  // Remove CRC and unpack
+  const dataBytes = bytes.slice(0, -1)
+  const unpacker = new BitUnpacker(dataBytes)
 
-  // Decode JSON
-  const decoder = new TextDecoder()
-  const jsonStr = decoder.decode(jsonBytes)
-  const data = JSON.parse(jsonStr)
+  // Unpack header
+  const schemaVersion = unpacker.unpack(4)
+  const chartVersion = unpacker.unpack(4)
+  const dateDays = unpacker.unpack(16)
+  const diagnostic = unpacker.unpack(1)
 
-  // Check schema version
-  if (data.v > SCHEMA_VERSION) {
+  if (schemaVersion > SCHEMA_VERSION) {
     throw new Error('S-code from newer version. Please update the app.')
   }
 
-  // Convert back to assessment format
-  const assessment = {
-    date: daysToDate(data.d),
-    isDiagnostic: data.diag === 1,
-    schemaVersion: data.v,
-    chartVersion: data.c,
-    cardio: data.cardio ? {
-      exercise: data.cardio.ex,
-      value: data.cardio.val,
-      exempt: data.cardio.exempt || false,
-    } : null,
-    strength: data.strength ? {
-      exercise: data.strength.ex,
-      value: data.strength.val,
-      exempt: data.strength.exempt || false,
-    } : null,
-    core: data.core ? {
-      exercise: data.core.ex,
-      value: data.core.val,
-      exempt: data.core.exempt || false,
-    } : null,
-    bodyComp: data.body ? {
-      heightInches: data.body.h,
-      waistInches: data.body.w,
-      exempt: data.body.exempt || false,
-    } : null,
+  // Unpack component presence flags
+  const hasCardio = unpacker.unpack(1) === 1
+  const hasStrength = unpacker.unpack(1) === 1
+  const hasCore = unpacker.unpack(1) === 1
+  const hasBodyComp = unpacker.unpack(1) === 1
+
+  let cardio = null
+  if (hasCardio) {
+    const exCode = unpacker.unpack(3)
+    const exempt = unpacker.unpack(1) === 1
+    const value = exempt ? null : unpacker.unpack(12)
+    cardio = {
+      exercise: CARDIO_EXERCISES_REV[exCode] || '2mile_run',
+      value,
+      exempt,
+    }
   }
 
-  return assessment
+  let strength = null
+  if (hasStrength) {
+    const exCode = unpacker.unpack(2)
+    const exempt = unpacker.unpack(1) === 1
+    const value = exempt ? null : unpacker.unpack(7)
+    strength = {
+      exercise: STRENGTH_EXERCISES_REV[exCode] || 'pushups',
+      value,
+      exempt,
+    }
+  }
+
+  let core = null
+  if (hasCore) {
+    const exCode = unpacker.unpack(2)
+    const exempt = unpacker.unpack(1) === 1
+    const value = exempt ? null : unpacker.unpack(12)
+    core = {
+      exercise: CORE_EXERCISES_REV[exCode] || 'situps',
+      value,
+      exempt,
+    }
+  }
+
+  let bodyComp = null
+  if (hasBodyComp) {
+    const exempt = unpacker.unpack(1) === 1
+    if (!exempt) {
+      const height = unpacker.unpack(11) / 10 // Convert back from tenths
+      const waist = unpacker.unpack(10) / 10
+      bodyComp = {
+        heightInches: height,
+        waistInches: waist,
+        exempt: false,
+      }
+    } else {
+      bodyComp = {
+        heightInches: null,
+        waistInches: null,
+        exempt: true,
+      }
+    }
+  }
+
+  return {
+    date: daysToDate(dateDays),
+    isDiagnostic: diagnostic === 1,
+    schemaVersion,
+    chartVersion,
+    cardio,
+    strength,
+    core,
+    bodyComp,
+  }
 }
 
 /**
