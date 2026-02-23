@@ -104,7 +104,7 @@ The app auto-detects diagnostic period based on your self-check date.
 - Visit your Fitness Assessment Cell (FAC)
 
 **About this app:**
-- Check QUICKSTART.md for detailed usage guide
+- Check [docs/QUICKSTART.md](docs/QUICKSTART.md) for detailed usage guide
 - Submit issues on GitHub
 
 ## License
