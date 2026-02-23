@@ -6,7 +6,7 @@ A mobile-first web app for USAF Airmen to check fitness performance against 2026
 
 ## 🚀 Use the App
 
-**👉 [Open USAF PFA Tracker](https://mwilco03.github.io/PFA/)**
+**👉 [Open USAF PFA Tracker](https://272-cos.github.io/PFA/)**
 
 Works on any device with a web browser. Best on mobile.
 
