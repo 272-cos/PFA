@@ -2,12 +2,12 @@
  * Scoring constants for 2026 PFA (50-20-15-15 model)
  */
 
-// Component weights (total = 100)
+// Component weights (total = 100) - keys match COMPONENTS values
 export const COMPONENT_WEIGHTS = {
-  CARDIO: 50,
-  BODY_COMP: 20,
-  STRENGTH: 15,
-  CORE: 15,
+  cardio: 50,
+  bodyComp: 20,
+  strength: 15,
+  core: 15,
 }
 
 // Component types
@@ -38,13 +38,16 @@ export const EXERCISES = {
   WHTR: 'whtr',
 }
 
-// Age groups
+// Age groups (official USAF 5-year brackets per AFPC charts)
 export const AGE_GROUPS = {
-  UNDER_20: '<20',
-  AGE_20_29: '20-29',
-  AGE_30_39: '30-39',
-  AGE_40_49: '40-49',
-  AGE_50_59: '50-59',
+  UNDER_25: '<25',
+  AGE_25_29: '25-29',
+  AGE_30_34: '30-34',
+  AGE_35_39: '35-39',
+  AGE_40_44: '40-44',
+  AGE_45_49: '45-49',
+  AGE_50_54: '50-54',
+  AGE_55_59: '55-59',
   AGE_60_PLUS: '60+',
 }
 
@@ -92,11 +95,14 @@ export function calculateAge(dob, date = new Date()) {
  * @returns {string} Age group constant
  */
 export function getAgeGroup(age) {
-  if (age < 20) return AGE_GROUPS.UNDER_20
-  if (age < 30) return AGE_GROUPS.AGE_20_29
-  if (age < 40) return AGE_GROUPS.AGE_30_39
-  if (age < 50) return AGE_GROUPS.AGE_40_49
-  if (age < 60) return AGE_GROUPS.AGE_50_59
+  if (age < 25) return AGE_GROUPS.UNDER_25
+  if (age < 30) return AGE_GROUPS.AGE_25_29
+  if (age < 35) return AGE_GROUPS.AGE_30_34
+  if (age < 40) return AGE_GROUPS.AGE_35_39
+  if (age < 45) return AGE_GROUPS.AGE_40_44
+  if (age < 50) return AGE_GROUPS.AGE_45_49
+  if (age < 55) return AGE_GROUPS.AGE_50_54
+  if (age < 60) return AGE_GROUPS.AGE_55_59
   return AGE_GROUPS.AGE_60_PLUS
 }
 
