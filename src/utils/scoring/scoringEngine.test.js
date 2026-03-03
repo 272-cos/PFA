@@ -119,40 +119,42 @@ describe('EC-01 – run time slower than chart worst → minimum chart points, n
   })
 })
 
-// ─── SL-02: 0 reps/seconds = did not attempt → exactly 0 points ──────────────
+// ─── SL-10 / EC-10: 0 reps on non-exempt → chart min points + component fail ──
+// Supersedes SL-02: 0 reps no longer returns 0 pts; it clamps to chart min
+// (same EC-01 logic) so "attempted with 0 reps" ≠ "not tested" (null).
 
-describe('SL-02 – 0 reps/seconds → 0 points (not minimum chart points)', () => {
-  it('pushups: 0 reps → 0 points', () => {
+describe('SL-10 – 0 reps → chart minimum points (not 0, not null)', () => {
+  it('pushups: 0 reps → chart min 0.8 pts (not 0)', () => {
     const result = lookupScore(EXERCISES.PUSHUPS, 0, M, U25)
-    expect(result.points).toBe(0)
-    expect(result.percentage).toBe(0)
+    expect(result.points).toBe(0.8)
+    expect(result.points).toBeGreaterThan(0)
   })
 
-  it('HAMR: 0 shuttles → 0 points', () => {
+  it('HAMR: 0 shuttles → chart min 29.5 pts', () => {
     const result = lookupScore(EXERCISES.HAMR, 0, M, U25)
-    expect(result.points).toBe(0)
-    expect(result.percentage).toBe(0)
+    expect(result.points).toBe(29.5)
+    expect(result.points).toBeGreaterThan(0)
   })
 
-  it('situps: 0 reps → 0 points', () => {
+  it('situps: 0 reps → chart min 2.3 pts', () => {
     const result = lookupScore(EXERCISES.SITUPS, 0, M, U25)
-    expect(result.points).toBe(0)
-    expect(result.percentage).toBe(0)
+    expect(result.points).toBe(2.3)
+    expect(result.points).toBeGreaterThan(0)
   })
 
-  it('CLRC: 0 reps → 0 points', () => {
+  it('CLRC: 0 reps → chart min 7.5 pts', () => {
     const result = lookupScore(EXERCISES.CLRC, 0, M, U25)
-    expect(result.points).toBe(0)
-    expect(result.percentage).toBe(0)
+    expect(result.points).toBe(7.5)
+    expect(result.points).toBeGreaterThan(0)
   })
 
-  it('plank: 0 seconds → 0 points', () => {
+  it('plank: 0 seconds → chart min 7.5 pts', () => {
     const result = lookupScore(EXERCISES.PLANK, 0, M, U25)
-    expect(result.points).toBe(0)
-    expect(result.percentage).toBe(0)
+    expect(result.points).toBe(7.5)
+    expect(result.points).toBeGreaterThan(0)
   })
 
-  it('maxPoints still reflects the table max even when points = 0', () => {
+  it('maxPoints still reflects the table max', () => {
     const result = lookupScore(EXERCISES.PUSHUPS, 0, M, U25)
     expect(result.maxPoints).toBe(15.0)
   })
@@ -160,7 +162,49 @@ describe('SL-02 – 0 reps/seconds → 0 points (not minimum chart points)', () 
   it('0 reps is distinct from null (null = untested, 0 = attempted with no reps)', () => {
     expect(lookupScore(EXERCISES.PUSHUPS, null, M, U25)).toBeNull()
     expect(lookupScore(EXERCISES.PUSHUPS, 0, M, U25)).not.toBeNull()
-    expect(lookupScore(EXERCISES.PUSHUPS, 0, M, U25).points).toBe(0)
+    expect(lookupScore(EXERCISES.PUSHUPS, 0, M, U25).points).toBeGreaterThan(0)
+  })
+})
+
+describe('EC-10 – 0 reps on non-exempt component → always pass:false', () => {
+  it('strength: 0 pushups → tested=true, pass=false', () => {
+    const result = calculateComponentScore(
+      { type: 'strength', exercise: EXERCISES.PUSHUPS, value: 0 },
+      M, U25
+    )
+    expect(result.tested).toBe(true)
+    expect(result.pass).toBe(false)
+    expect(result.points).toBe(0.8)
+  })
+
+  it('cardio: 0 HAMR → tested=true, pass=false', () => {
+    const result = calculateComponentScore(
+      { type: 'cardio', exercise: EXERCISES.HAMR, value: 0 },
+      M, U25
+    )
+    expect(result.tested).toBe(true)
+    expect(result.pass).toBe(false)
+    expect(result.points).toBe(29.5)
+  })
+
+  it('core: 0 situps → tested=true, pass=false', () => {
+    const result = calculateComponentScore(
+      { type: 'core', exercise: EXERCISES.SITUPS, value: 0 },
+      M, U25
+    )
+    expect(result.tested).toBe(true)
+    expect(result.pass).toBe(false)
+    expect(result.points).toBe(2.3)
+  })
+
+  it('core: 0s plank → tested=true, pass=false', () => {
+    const result = calculateComponentScore(
+      { type: 'core', exercise: EXERCISES.PLANK, value: 0 },
+      M, U25
+    )
+    expect(result.tested).toBe(true)
+    expect(result.pass).toBe(false)
+    expect(result.points).toBe(7.5)
   })
 })
 
