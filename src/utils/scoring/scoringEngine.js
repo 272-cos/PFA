@@ -53,11 +53,9 @@ export function lookupScore(exercise, value, gender, ageGroup) {
 
   const isPlank = exercise === EXERCISES.PLANK
 
-  // SL-02: 0 reps/seconds = did not attempt → 0 points
-  // (distinct from null = untested, and from below-min = minimum chart points)
-  if ((isRepsBasedExercise || isPlank) && value === 0) {
-    return { points: 0, maxPoints: table[0].points, percentage: 0 }
-  }
+  // SL-10/EC-10: 0 reps/seconds on a non-exempt component → chart minimum
+  // points (same clamp as EC-01 below-chart-min), never 0.
+  // (distinct from null = untested; pass:false is enforced at component level)
 
   let points = 0
   let matched = false
@@ -152,7 +150,8 @@ export function calculateComponentScore(component, gender, ageGroup) {
   const { points, percentage } = scoreResult
   const maxPoints = getMaxPointsForComponent(type)
   const minimum = COMPONENT_MINIMUMS[type] || 0
-  const pass = percentage >= minimum
+  // SL-10: 0 reps/seconds always fails the component regardless of points
+  const pass = value === 0 ? false : percentage >= minimum
 
   return {
     tested: true,
