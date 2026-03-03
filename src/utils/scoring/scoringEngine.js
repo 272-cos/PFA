@@ -49,29 +49,32 @@ export function lookupScore(exercise, value, gender, ageGroup) {
   const isPlank = exercise === EXERCISES.PLANK
 
   let points = 0
+  let matched = false
 
   if (isTimeBasedExercise || exercise === EXERCISES.WHTR) {
-    // Lower is better - find first threshold >= value
+    // Lower is better – table sorted ascending (fastest/lowest first = max points)
     for (let i = 0; i < table.length; i++) {
       if (value <= table[i].threshold) {
         points = table[i].points
+        matched = true
         break
       }
     }
-    // If worse than worst threshold, use minimum points
-    if (points === 0 && table.length > 0) {
+    // Worse than every chart entry → clamp to minimum chart points (never 0)
+    if (!matched) {
       points = table[table.length - 1].points
     }
   } else if (isRepsBasedExercise || isPlank) {
-    // Higher is better - find first threshold <= value
+    // Higher is better – table sorted descending (highest reps/time first = max points)
     for (let i = 0; i < table.length; i++) {
       if (value >= table[i].threshold) {
         points = table[i].points
+        matched = true
         break
       }
     }
-    // If worse than worst threshold, use minimum points
-    if (points === 0 && table.length > 0) {
+    // Worse than every chart entry → clamp to minimum chart points (never 0)
+    if (!matched) {
       points = table[table.length - 1].points
     }
   }
@@ -285,6 +288,7 @@ export function parseTime(timeStr) {
     return mins * 60 + secs
   }
 
-  // Otherwise parse as total seconds
-  return parseInt(timeStr, 10) || null
+  // No colon: treat as whole minutes (e.g. "18" → 18:00 → 1080 s)
+  const mins = parseInt(timeStr, 10)
+  return mins ? mins * 60 : null
 }
