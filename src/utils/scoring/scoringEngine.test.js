@@ -208,6 +208,104 @@ describe('EC-10 – 0 reps on non-exempt component → always pass:false', () =>
   })
 })
 
+// ─── SL-03 / EC-07: run time boundary is inclusive ───────────────────────────
+// The listed time is the SLOWEST valid time for that row (<=, not <).
+// Running exactly at the boundary earns that row's points.
+//
+// Male U25 run table rows used here:
+//   Row 15: 1057s (17:37) → 38.6 pts
+//   Row 16: 1075s (17:55) → 37.5 pts  ← primary boundary under test
+//   Row 17: 1103s (18:23) → 35.5 pts
+//   Row 20: 1176s (19:36) → 31.0 pts
+//   Row 21: 1185s (19:45) → 29.5 pts  ← chart worst
+
+describe('SL-03 / EC-07 – run time at exact boundary earns that row\'s points (inclusive)', () => {
+  it('2-mile run: exactly at boundary 17:55 (1075s) → 37.5 pts', () => {
+    const result = lookupScore(EXERCISES.RUN_2MILE, 1075, M, U25)
+    expect(result.points).toBe(37.5)
+  })
+
+  it('2-mile run: 1 second faster than boundary (1074s) → same row 37.5 pts', () => {
+    const result = lookupScore(EXERCISES.RUN_2MILE, 1074, M, U25)
+    expect(result.points).toBe(37.5)
+  })
+
+  it('2-mile run: 1 second slower than boundary (1076s) → next row 35.5 pts', () => {
+    const result = lookupScore(EXERCISES.RUN_2MILE, 1076, M, U25)
+    expect(result.points).toBe(35.5)
+  })
+
+  it('2-mile run: exactly at row 20 boundary 19:36 (1176s) → 31.0 pts', () => {
+    const result = lookupScore(EXERCISES.RUN_2MILE, 1176, M, U25)
+    expect(result.points).toBe(31.0)
+  })
+
+  it('2-mile run: 1 second slower than row 20 boundary (1177s) → 29.5 pts', () => {
+    const result = lookupScore(EXERCISES.RUN_2MILE, 1177, M, U25)
+    expect(result.points).toBe(29.5)
+  })
+
+  it('2-mile run: exactly at chart-worst boundary 19:45 (1185s) → 29.5 pts (inclusive)', () => {
+    const result = lookupScore(EXERCISES.RUN_2MILE, 1185, M, U25)
+    expect(result.points).toBe(29.5)
+  })
+
+  it('2-mile run: 1 second faster than chart worst (1184s) → 29.5 pts (within last row)', () => {
+    const result = lookupScore(EXERCISES.RUN_2MILE, 1184, M, U25)
+    expect(result.points).toBe(29.5)
+  })
+})
+
+// ─── SL-04: HAMR gaps use containing bracket, no interpolation ───────────────
+// HAMR is scored higher-is-better; the table has discrete thresholds.
+// A value landing in the gap between two rows earns the lower bracket's points.
+//
+// Male U25 HAMR rows used here:
+//   threshold 100 → 50.0 pts
+//   threshold  94 → 49.4 pts  (gap: 95–99)
+//   threshold  45 → 32.5 pts
+//   threshold  42 → 31.0 pts  (gap: 43–44)
+//   threshold  39 → 29.5 pts  ← chart worst
+
+describe('SL-04 – HAMR gap values use containing bracket (no interpolation)', () => {
+  it('43 shuttles (gap between 42 and 45) → 31.0 pts, not interpolated 31.5', () => {
+    const result = lookupScore(EXERCISES.HAMR, 43, M, U25)
+    expect(result.points).toBe(31.0)
+    expect(result.points).not.toBe(31.5)  // confirms no interpolation
+  })
+
+  it('44 shuttles (gap between 42 and 45) → 31.0 pts', () => {
+    const result = lookupScore(EXERCISES.HAMR, 44, M, U25)
+    expect(result.points).toBe(31.0)
+  })
+
+  it('45 shuttles (exact threshold) → 32.5 pts (bracket boundary is inclusive)', () => {
+    const result = lookupScore(EXERCISES.HAMR, 45, M, U25)
+    expect(result.points).toBe(32.5)
+  })
+
+  it('46 shuttles (1 above lower boundary of 45–47 range) → 32.5 pts', () => {
+    const result = lookupScore(EXERCISES.HAMR, 46, M, U25)
+    expect(result.points).toBe(32.5)
+  })
+
+  it('97 shuttles (gap between 94 and 100) → 49.4 pts, not interpolated ~49.8', () => {
+    const result = lookupScore(EXERCISES.HAMR, 97, M, U25)
+    expect(result.points).toBe(49.4)
+    expect(result.points).not.toBeCloseTo(49.8, 1)  // confirms no interpolation
+  })
+
+  it('99 shuttles (gap between 94 and 100) → 49.4 pts', () => {
+    const result = lookupScore(EXERCISES.HAMR, 99, M, U25)
+    expect(result.points).toBe(49.4)
+  })
+
+  it('40 shuttles (gap between 39 and 42) → 29.5 pts (worst bracket)', () => {
+    const result = lookupScore(EXERCISES.HAMR, 40, M, U25)
+    expect(result.points).toBe(29.5)
+  })
+})
+
 // ─── Mid-table lookups ────────────────────────────────────────────────────────
 
 describe('lookupScore – mid-table values', () => {
