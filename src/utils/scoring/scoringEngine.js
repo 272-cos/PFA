@@ -285,6 +285,7 @@ export function parseTime(timeStr) {
     return mins * 60 + secs
   }
 
-  // Otherwise parse as total seconds
-  return parseInt(timeStr, 10) || null
+  // No colon: treat as whole minutes (e.g. "18" → 18:00 → 1080 s)
+  const mins = parseInt(timeStr, 10)
+  return mins ? mins * 60 : null
 }
