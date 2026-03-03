@@ -244,12 +244,14 @@ export function calculateCompositeScore(componentResults) {
     }
   }
 
-  const composite = (totalEarned / totalPossible) * 100
+  // SL-06: composite = round((earned/possible)*100, 1) – official rounding
+  // Round BEFORE the pass check so the displayed value matches the decision.
+  const composite = Math.round((totalEarned / totalPossible) * 1000) / 10
   const compositePass = composite >= PASSING_COMPOSITE
   const overallPass = compositePass && allComponentsPass
 
   return {
-    composite: Math.round(composite * 10) / 10, // Round to 1 decimal
+    composite, // SL-06: already rounded to 1 decimal
     pass: overallPass,
     totalEarned,
     totalPossible,

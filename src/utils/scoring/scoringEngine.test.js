@@ -355,6 +355,66 @@ describe('SL-05 / EC-06 – WHtR rounded to 2 decimals before lookup', () => {
   })
 })
 
+// ─── SL-06: composite = round((earned/possible)*100, 1) ──────────────────────
+// The composite must be rounded to 1 decimal BEFORE the pass/fail comparison.
+// Without this, a raw composite of 74.95 would display as 75.0 but fail.
+
+const makeComp = (points, maxPoints, pass = true) => ({
+  tested: true, exempt: false, points, maxPoints, pass,
+})
+
+describe('SL-06 – composite rounded to 1 decimal before pass check', () => {
+  it('composite is the rounded value, not raw float', () => {
+    // raw = (37.5/50)*100 = 75.0 → 75.0
+    const result = calculateCompositeScore([makeComp(37.5, 50)])
+    expect(result.composite).toBe(75.0)
+  })
+
+  it('raw 74.95 → composite 75.0 → passes (key rounding-before-check case)', () => {
+    // raw = (1499/2000)*100 = 74.95 → rounds to 75.0 → compositePass = true
+    // Without SL-06 fix, compositePass would use raw 74.95 < 75 → fail
+    const result = calculateCompositeScore([makeComp(1499, 2000)])
+    expect(result.composite).toBe(75.0)
+    expect(result.pass).toBe(true)
+  })
+
+  it('raw 74.90 → composite 74.9 → fails', () => {
+    // raw = (1498/2000)*100 = 74.9 → rounds to 74.9 → fail
+    const result = calculateCompositeScore([makeComp(1498, 2000)])
+    expect(result.composite).toBe(74.9)
+    expect(result.pass).toBe(false)
+  })
+
+  it('raw 75.05 → composite 75.1 → passes', () => {
+    const result = calculateCompositeScore([makeComp(1501, 2000)])
+    expect(result.composite).toBe(75.1)
+    expect(result.pass).toBe(true)
+  })
+
+  it('raw 72.55 → composite 72.6 (rounds half-up)', () => {
+    // Math.round(725.5) = 726 in JS → 72.6
+    const result = calculateCompositeScore([makeComp(7255, 10000)])
+    expect(result.composite).toBe(72.6)
+  })
+
+  it('standard 4-component perfect score → composite 100.0', () => {
+    const result = calculateCompositeScore([
+      makeComp(50, 50),  // cardio
+      makeComp(20, 20),  // bodyComp
+      makeComp(15, 15),  // strength
+      makeComp(15, 15),  // core
+    ])
+    expect(result.composite).toBe(100.0)
+    expect(result.pass).toBe(true)
+  })
+
+  it('composite exact at 75.0 → passes', () => {
+    const result = calculateCompositeScore([makeComp(75, 100)])
+    expect(result.composite).toBe(75.0)
+    expect(result.pass).toBe(true)
+  })
+})
+
 // ─── Mid-table lookups ────────────────────────────────────────────────────────
 
 describe('lookupScore – mid-table values', () => {
