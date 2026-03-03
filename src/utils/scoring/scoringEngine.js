@@ -24,6 +24,11 @@ export function lookupScore(exercise, value, gender, ageGroup) {
     return null // Not tested
   }
 
+  // Negative values are physically impossible for any exercise
+  if (value < 0) {
+    return null
+  }
+
   const table = getScoringTable(gender, ageGroup, exercise)
   if (!table || table.length === 0) {
     console.error(`No scoring table found for ${exercise}`)
@@ -289,12 +294,15 @@ export function parseTime(timeStr) {
   // If it contains a colon, parse as mm:ss
   if (timeStr.includes(':')) {
     const parts = timeStr.split(':')
-    const mins = parseInt(parts[0], 10) || 0
-    const secs = parseInt(parts[1], 10) || 0
-    return mins * 60 + secs
+    const mins = parseInt(parts[0], 10)
+    const secs = parseInt(parts[1], 10)
+    if (isNaN(mins) || isNaN(secs) || mins < 0 || secs < 0 || secs >= 60) return null
+    const total = mins * 60 + secs
+    return total > 0 ? total : null
   }
 
   // No colon: treat as whole minutes (e.g. "18" → 18:00 → 1080 s)
   const mins = parseInt(timeStr, 10)
-  return mins ? mins * 60 : null
+  if (isNaN(mins) || mins <= 0) return null
+  return mins * 60
 }
