@@ -35,6 +35,11 @@ export function lookupScore(exercise, value, gender, ageGroup) {
     return null
   }
 
+  // SL-05 / EC-06: WHtR is rounded to 2 decimals before lookup
+  // e.g. raw ratio 0.494 → 0.49 (20.0 pts), 0.495 → 0.50 (19.0 pts)
+  const lookupValue =
+    exercise === EXERCISES.WHTR ? Math.round(value * 100) / 100 : value
+
   // For times (run, plank): lower is better, threshold is MAX time
   // For reps (pushups, situps): higher is better, threshold is MIN reps
   // For WHtR: lower is better, threshold is MAX ratio
@@ -63,7 +68,7 @@ export function lookupScore(exercise, value, gender, ageGroup) {
   if (isTimeBasedExercise || exercise === EXERCISES.WHTR) {
     // Lower is better – table sorted ascending (fastest/lowest first = max points)
     for (let i = 0; i < table.length; i++) {
-      if (value <= table[i].threshold) {
+      if (lookupValue <= table[i].threshold) {
         points = table[i].points
         matched = true
         break
@@ -76,7 +81,7 @@ export function lookupScore(exercise, value, gender, ageGroup) {
   } else if (isRepsBasedExercise || isPlank) {
     // Higher is better – table sorted descending (highest reps/time first = max points)
     for (let i = 0; i < table.length; i++) {
-      if (value >= table[i].threshold) {
+      if (lookupValue >= table[i].threshold) {
         points = table[i].points
         matched = true
         break
@@ -135,10 +140,14 @@ export function calculateComponentScore(component, gender, ageGroup) {
 
   // Calculate score
   const scoreResult = lookupScore(exercise, value, gender, ageGroup)
+  // SL-07: 2km walk contributes 0 earned / 0 possible to composite
+  const walkOnly = exercise === EXERCISES.WALK_2KM
+
   if (!scoreResult) {
     return {
       tested: true,
       exempt: false,
+      walkOnly,
       points: 0,
       maxPoints: getMaxPointsForComponent(type),
       percentage: 0,
@@ -156,6 +165,7 @@ export function calculateComponentScore(component, gender, ageGroup) {
   return {
     tested: true,
     exempt: false,
+    walkOnly, // SL-07: true when exercise is 2km walk
     points,
     maxPoints,
     percentage,
@@ -184,12 +194,19 @@ export function calculateCompositeScore(componentResults) {
   let allComponentsPass = true
   const testedComponents = []
   const exemptComponents = []
+  const walkComponents = []
   const failedComponents = []
 
   componentResults.forEach(result => {
     if (result.exempt) {
       exemptComponents.push(result)
       // Exempt: 0 earned, 0 possible
+      return
+    }
+
+    // SL-07: 2km walk → 0 earned, 0 possible; does not affect pass gate
+    if (result.walkOnly) {
+      walkComponents.push(result)
       return
     }
 
@@ -208,9 +225,10 @@ export function calculateCompositeScore(componentResults) {
     }
   })
 
-  // Can't calculate composite without all 4 components (unless exempt)
+  // Can't calculate composite without all components accounted for (tested/exempt/walk)
   const totalComponents = componentResults.length
-  const testedOrExempt = testedComponents.length + exemptComponents.length
+  const testedOrExempt =
+    testedComponents.length + exemptComponents.length + walkComponents.length
 
   if (testedOrExempt < totalComponents) {
     return {
@@ -220,12 +238,13 @@ export function calculateCompositeScore(componentResults) {
       totalPossible,
       testedComponents,
       exemptComponents,
+      walkComponents,
       failedComponents,
       partialAssessment: true,
     }
   }
 
-  // All exempt = special case
+  // All exempt/walk = special case (no scorable components)
   if (totalPossible === 0) {
     return {
       composite: null,
@@ -234,22 +253,26 @@ export function calculateCompositeScore(componentResults) {
       totalPossible: 0,
       testedComponents: [],
       exemptComponents,
+      walkComponents,
       failedComponents: [],
       allExempt: true,
     }
   }
 
-  const composite = (totalEarned / totalPossible) * 100
+  // SL-06: composite = round((earned/possible)*100, 1) – official rounding
+  // Round BEFORE the pass check so the displayed value matches the decision.
+  const composite = Math.round((totalEarned / totalPossible) * 1000) / 10
   const compositePass = composite >= PASSING_COMPOSITE
   const overallPass = compositePass && allComponentsPass
 
   return {
-    composite: Math.round(composite * 10) / 10, // Round to 1 decimal
+    composite, // SL-06: already rounded to 1 decimal
     pass: overallPass,
     totalEarned,
     totalPossible,
     testedComponents,
     exemptComponents,
+    walkComponents, // SL-07: walk results tracked but excluded from composite
     failedComponents,
     compositePass,
     allComponentsPass,
