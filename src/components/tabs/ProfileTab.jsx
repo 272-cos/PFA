@@ -119,14 +119,23 @@ export default function ProfileTab() {
     setError('')
     setSuccess('')
 
-    if (!pasteCode.trim()) {
+    // UX-09: strip whitespace and newlines before decode
+    const trimmed = pasteCode.trim().replace(/\s+/g, '')
+
+    if (!trimmed) {
       setError('Please enter a D-code')
       return
     }
 
+    // CS-08 reverse: S-code in D-code field
+    if (trimmed.startsWith('S')) {
+      setError('This is an S-code. Paste it in the History tab instead.')
+      return
+    }
+
     try {
-      const decoded = decodeDCode(pasteCode.trim())
-      updateDCode(pasteCode.trim(), decoded)
+      const decoded = decodeDCode(trimmed)
+      updateDCode(trimmed, decoded)
       setDob(decoded.dob.toISOString().split('T')[0])
       setGender(decoded.gender)
       setPasteCode('')
