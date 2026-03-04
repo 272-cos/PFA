@@ -312,6 +312,19 @@ export default function SelfCheckTab() {
                 {scores.composite.pass ? '✓ PASSING' : '✗ FAILING'}
                 {isDiagnostic && ' (Diagnostic Period)'}
               </p>
+              {!scores.composite.pass && (
+                <ul className="text-xs text-red-700 mt-1 space-y-0.5">
+                  {!scores.composite.compositePass && (
+                    <li>Composite {scores.composite.composite.toFixed(1)} below 75.0 minimum</li>
+                  )}
+                  {scores.composite.failedComponents.map((fc, i) => (
+                    <li key={i}>{fc.type.charAt(0).toUpperCase() + fc.type.slice(1)} below {fc.minimum}% minimum ({fc.percentage.toFixed(1)}%)</li>
+                  ))}
+                  {scores.composite.walkComponents?.some(w => w.pass === false) && (
+                    <li>2km Walk not passed</li>
+                  )}
+                </ul>
+              )}
             </div>
             <div className="text-right">
               <p className="text-sm text-gray-600">
@@ -619,13 +632,13 @@ function WalkSection({ walkSelected, setWalkSelected, walkTime, setWalkTime, wal
           onChange={(e) => setWalkSelected(e.target.checked)}
           className="mr-2"
         />
-        <span className="text-sm text-gray-700">Completing 2km Walk (profile-only)</span>
+        <span className="text-sm font-semibold text-gray-900">2km Walk</span>
       </label>
       {walkSelected && (
         <div className="mt-3">
           {walkTimeLimit && (
             <p className="text-xs text-blue-600 mb-3">
-              Time limit for your bracket: {walkTimeLimitStr} (pass/fail - no points scored)
+              Time limit: {walkTimeLimitStr} (pass/fail - no points scored)
             </p>
           )}
           <div className="grid grid-cols-2 gap-4">
@@ -666,7 +679,7 @@ function WalkSection({ walkSelected, setWalkSelected, walkTime, setWalkTime, wal
               </select>
               {!walkPass && (
                 <p className="text-xs text-red-600 mt-1">
-                  Walk failure results in overall PFA failure (EC-05)
+                  Walk failure results in overall PFA failure
                 </p>
               )}
             </div>
