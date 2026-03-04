@@ -253,10 +253,26 @@ export default function SelfCheckTab() {
         setSuccess('Shared!')
         setTimeout(() => setSuccess(''), 2000)
       } catch (err) {
-        if (err.name !== 'AbortError') await copyToClipboard()
+        if (err.name !== 'AbortError') {
+          // Fallback to clipboard with correct "Copied!" message
+          try {
+            await navigator.clipboard.writeText(shareUrl)
+            setSuccess('Link copied to clipboard!')
+            setTimeout(() => setSuccess(''), 2000)
+          } catch {
+            setError('Failed to share or copy')
+          }
+        }
       }
     } else {
-      await copyToClipboard()
+      // No Web Share API - copy link to clipboard
+      try {
+        await navigator.clipboard.writeText(shareUrl)
+        setSuccess('Link copied to clipboard!')
+        setTimeout(() => setSuccess(''), 2000)
+      } catch {
+        setError('Failed to copy to clipboard')
+      }
     }
   }
 

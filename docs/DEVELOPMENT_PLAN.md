@@ -93,17 +93,18 @@ Expand S-code bit layout from 87 bits (V2) to full design-spec ~104 bits (V3):
 
 **Design references:** §3.1 Web Share API, §3.2 URL Hydration, §3.3 Manual Code Entry, EC-28, EC-29, UX-08, UX-09, CS-03, CS-08
 
-- [ ] On app load: parse `?d=`, `?s=` (multiple), `?tab=` from `window.location.search`
-- [ ] Decode each param; CRC failure on any code = specific error toast, skip that param
-- [ ] D-code in S-code field → "This is a D-code. Paste it in Profile." (EC-17, CS-08)
-- [ ] `?tab=` navigates to correct tab on load
-- [ ] EC-28: invalid code in URL param → error per bad param, still load valid params
-- [ ] EC-29: mismatched schema versions across `d`/`s` params → warn, load independently
-- [ ] Web Share API: `navigator.canShare()` feature detect; show Share button if supported
-- [ ] Share payload: `{ title: 'PFA Self-Check', text: url }` (use `text`, not `url` - iOS Safari fix)
-- [ ] Fallback: Copy button + "Copied!" confirmation toast on unsupported browsers
-- [ ] UX-09: paste fields strip whitespace and newlines before decode
-- [ ] Share URLs constructed from current D-code + active S-code(s)
+- [X] On app load: parse `?d=`, `?s=` (multiple), `?tab=` from `window.location.search`
+- [X] Decode each param; CRC failure on any code = specific error toast, skip that param
+- [X] D-code in S-code field → "This is a D-code. Paste it in Profile." (EC-17, CS-08)
+- [X] S-code in D-code field → "This is an S-code. Paste it in History." (CS-08 reverse)
+- [X] `?tab=` navigates to correct tab on load
+- [X] EC-28: invalid code in URL param → error toast per bad param, still load valid params
+- [X] EC-29: mismatched schema versions across `d`/`s` params → warn toast, load independently
+- [X] Web Share API: `navigator.canShare()` feature detect; show Share button if supported
+- [X] Share payload: `{ title: 'PFA Self-Check', text: url }` (use `text`, not `url` - iOS Safari fix)
+- [X] Fallback: Copy button + "Link copied to clipboard!" toast on unsupported browsers
+- [X] UX-09: paste fields strip whitespace and newlines before decode (ProfileTab + HistoryTab)
+- [X] Share URLs constructed from current D-code + active S-code(s)
 
 **Acceptance:** `?d=D1-xxx&s=S3-yyy&tab=check` loads correctly. Share button fires native share sheet on mobile. Copy fallback works on desktop. Bad CRC shows error, does not crash.
 
