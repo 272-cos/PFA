@@ -153,12 +153,12 @@ Expand S-code bit layout from 87 bits (V2) to full design-spec ~104 bits (V3):
 
 **Design references:** UX-01 through UX-11
 
-- [ ] **UX-03:** Exercise type = segmented control (not dropdown) for cardio, strength, core
-- [ ] **UX-04:** Exemption toggle = separate switch per component
-- [ ] **UX-01:** Live score estimate banner updates on every input change (no "calculate" button)
-- [ ] **UX-02:** Component pass/fail badges (green/red) alongside points
-- [ ] **UX-10:** Diagnostic period auto-detected from self-check date; display "DIAGNOSTIC PERIOD" badge
-- [ ] **UX-11:** Time inputs accept `mm:ss` and total seconds; display always `mm:ss`
+- [X] **UX-03:** Exercise type = segmented control (not dropdown) for cardio, strength, core
+- [X] **UX-04:** Exemption toggle = separate switch per component
+- [X] **UX-01:** Live score estimate banner updates on every input change (no "calculate" button)
+- [X] **UX-02:** Component pass/fail badges (green/red) alongside points
+- [X] **UX-10:** Diagnostic period auto-detected from self-check date; display "DIAGNOSTIC PERIOD" badge
+- [X] **UX-11:** Time inputs accept `mm:ss` and total seconds; display always `mm:ss`
 
 **Acceptance:** All UX rules pass visual inspection.
 
