@@ -37,9 +37,7 @@ Final. These constrain all downstream design.
 | GR-03 | Each self-check produces its own unique S-code. | Atomic, portable, independently verifiable. | No H-code. History = collection of S-codes entered in a session. |
 | GR-04 | D-code contains ONLY: DOB + gender. | DOB needed for age-group derivation at any date. Gender determines bracket. Height/waist are body measurements taken at self-check time. | D-code is maximally compact (~9 chars). Height/waist live in S-code. |
 | GR-05 | Member must perform a new self-check to use projections. | Stale/cross-standard projections are misleading. | Projection engine requires 1+ S-codes from 2026 self-checks. |
-| GR-06 | No free-text input anywhere. | Complicates encoding, inflates S-code, content moderation. | All feedback is enumerated. No notes. No injury description. No comments. |
-| GR-07 | Injury is binary: Yes / No. | Multi-select injury regions add complexity without actionable value. | Single toggle. Yes = "Discuss with your medical provider and UFPM regarding AF Form 469 exemptions." |
-| GR-08 | RPE capped at 5 levels. | Borg CR-10 is too granular for a self-check tool. | Enum: EASY / MODERATE / HARD / VERY_HARD / MAXIMAL. 3 bits. |
+| GR-06 | No free-text input anywhere. | Complicates encoding, inflates S-code, content moderation. | No notes, no comments. All inputs are structured fields. |
 | GR-09 | Mobile-first. Desktop secondary. | Phone is primary device (gym, track, FAC). | Tailwind mobile-first. Touch targets >= 44px. Bottom-anchored actions. |
 | GR-10 | Single-page app. GitHub Pages. Zero backend. | No auth. No database. Static deploy. | State lives in URL params, pasted codes, or session memory. |
 | GR-11 | Unofficial tool. Persistent disclaimer. | Not a replacement for official scoring. | Every screen/report: "UNOFFICIAL SELF-CHECK." |
@@ -307,9 +305,7 @@ Format: `S3-[base64url(bit-packed payload + CRC-8)]`
 | Strength | 9 | exercise:1, exempt:1, value:7 |
 | Core | 14 | exercise:2, exempt:1, value:11 |
 | Body Comp | 25 | exempt:1, height:11, waist:10, offset:3 |
-| Feedback | 20 | base_id:3, rpe:3, sleep:2, nutrition:2, injured:1, env:6, confidence:3 |
-
-**Note:** The feedback block is always encoded (20 bits, defaults to zeros) but UI collection is descoped - these fields are not actionable within the app's scope. The bits are reserved for future use.
+| Reserved | 20 | base_id:3 (altitude), reserved:17 |
 
 **Backward compat:** S2-prefixed codes decoded via V2 path. V2 codes lack the feedback block and body comp offset.
 
@@ -381,19 +377,6 @@ Component weights: Cardio 50 | WHtR 20 | Strength 15 | Core 15 | Total 100
 | 4 | History | S-code paste, decoded list, outlier flag, trend mini-chart. |
 | 5 | Report | Rank/name/unit (not stored), feedback review, projection toggle, Copy + Print. |
 
-### Feedback (Descoped from UI)
-
-The feedback block is encoded in the S-code V3 bit layout (20 bits, defaults to zeros) but UI collection is descoped. These fields (RPE, sleep quality, nutrition, injured, environment, confidence) are not individually actionable within the app's scope. The bits are reserved for potential future use.
-
-| Field | Type | Values | Bits | Status |
-|---|---|---|---|---|
-| RPE | Enum (5) | Easy / Moderate / Hard / Very Hard / Maximal | 3 | Encoded only |
-| Sleep | Enum (4) | Poor / Fair / Good / Excellent | 2 | Encoded only |
-| Nutrition | Enum (4) | Fasted / Light / Normal / Heavy | 2 | Encoded only |
-| Injured | Bool | No / Yes | 1 | Encoded only |
-| Environment | Bitmask (6) | Hot, Cold, Humid, Windy, Altitude Notable, Indoor | 6 | Encoded only |
-| Confidence | Enum (5) | Not Ready / Uncertain / Neutral / Confident / Very Confident | 3 | Encoded only |
-
 ### Tech Stack
 
 | Layer | Choice | Rationale |
@@ -453,5 +436,5 @@ The feedback block is encoded in the S-code V3 bit layout (20 bits, defaults to 
 |---|---|---|
 | v1.0 | 8 Feb 2026 | Initial. Gap analysis, edge cases, data model, scoring engine, projection engine, UI. |
 | v1.1 | 8 Feb 2026 | Guardrails locked. 2026 only. Separate D/S-codes. DOB captured. 52 guardrails. 24 edge cases. |
-| v1.2 | 8 Feb 2026 | Terminology section. S-code renamed from A-code. D-code = DOB+gender only. No free text. Binary injury. RPE cap 5. Altitude via USGS EPQS. Web Share API + URL hydration. Run cap 2:00:00. HAMR time-to-shuttle hidden. 30 edge cases. |
+| v1.2 | 8 Feb 2026 | Terminology section. S-code renamed from A-code. D-code = DOB+gender only. No free text. Altitude via USGS EPQS. Web Share API + URL hydration. Run cap 2:00:00. HAMR time-to-shuttle hidden. 30 edge cases. |
 | v1.3 | 8 Feb 2026 | Altitude model changed from API fetch to static base registry (7 bases, 3 states). Gated by state toggle. No API. No coordinates. No lat/long in S-code. base_id enum (3 bits) replaces lat(17)+lng(18)+elevation(14) = saved 46 bits. Removed Michigan base seed data. S-code shrinks from ~31 chars to ~22 chars. Removed EC-28 (API timeout). Markdown format. |

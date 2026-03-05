@@ -12,7 +12,7 @@
 | Scoring tables | ✅ Complete | All 18 brackets. WHTR universal table. |
 | Scoring engine | ⚠️ Partial | Missing: walk pass/fail (SL-07), remaining edge cases EC-02/SL-03-SL-09 unverified |
 | D-code codec | ✅ Complete | Encode/decode/CRC verified |
-| S-code codec | ⚠️ Partial | 87-bit V2; missing: `base_id`, `rpe`, `sleep`, `nutrition`, `injured`, `env_flags`, `confidence`, `whtr_offset`, `cardio_walk_pass` |
+| S-code codec | ⚠️ Partial | 87-bit V2; missing: `base_id`, `whtr_offset`, `cardio_walk_pass` |
 | Input validation | ⚠️ Partial | IV-01 through IV-13; most not enforced in UI |
 | Profile tab | ✅ Functional | Missing: URL hydration (`?d=`), Web Share API |
 | Self-Check tab | ⚠️ Partial | Missing: altitude toggle, walk option (IV-11), segmented controls (UX-03), feedback fields, sharing |
@@ -60,7 +60,7 @@
 
 #### Task 2.2 - S-Code V3: Full Design-Spec Payload
 
-**Design references:** §7.2 S-Code data model, GR-13 (altitude), GR-07 (injury), GR-08 (RPE), §10 Feedback
+**Design references:** §7.2 S-Code data model, GR-13 (altitude)
 
 Expand S-code bit layout from 87 bits (V2) to full design-spec ~104 bits (V3):
 
@@ -69,16 +69,10 @@ Expand S-code bit layout from 87 bits (V2) to full design-spec ~104 bits (V3):
 | `whtr_measured_offset` | 3 | 0-5 days before self-check |
 | `cardio_walk_pass` | 1 | Boolean (only when cardio_type=walk) |
 | `base_id` | 3 | 0=N/A, 1-7 (altitude base registry) |
-| `rpe` | 3 | 0-4 mapped from 1-5 |
-| `sleep_quality` | 2 | 0=poor / 1=fair / 2=good / 3=excellent |
-| `nutrition` | 2 | 0=fasted / 1=light / 2=normal / 3=heavy |
-| `injured` | 1 | 0=no / 1=yes |
-| `environment_flags` | 6 | hot, cold, humid, windy, altitude\_notable, indoor |
-| `confidence` | 3 | 0-4 mapped from 1-5 |
 
 - [X] Bump schema version to `S3-` prefix, update `SCHEMA_VERSION = 3`
 - [X] Update `BitWriter`/`BitReader` field sequence in `scode.js`
-- [X] Update `bitpack.js` constants for new enums (base registry, RPE, sleep, nutrition, confidence)
+- [X] Update `bitpack.js` constants for new enums (base registry)
 - [X] Backward-compat: V2 decode still works (detect prefix `S2-`)
 - [X] Update `encodeSCode()` and `decodeSCode()` for new fields
 - [X] Add base registry constant: `BASE_REGISTRY` array of 7 installations (§4)
@@ -157,7 +151,7 @@ Expand S-code bit layout from 87 bits (V2) to full design-spec ~104 bits (V3):
 
 #### Task 3.3 - Feedback Fields + UX Polish in Self-Check
 
-**Design references:** §10 Feedback table, UX-01 through UX-13, GR-06, GR-07, GR-08
+**Design references:** UX-01 through UX-11
 
 - [ ] **UX-03:** Exercise type = segmented control (not dropdown) for cardio, strength, core
 - [ ] **UX-04:** Exemption toggle = separate switch per component
@@ -165,12 +159,8 @@ Expand S-code bit layout from 87 bits (V2) to full design-spec ~104 bits (V3):
 - [ ] **UX-02:** Component pass/fail badges (green/red) alongside points
 - [ ] **UX-10:** Diagnostic period auto-detected from self-check date; display "DIAGNOSTIC PERIOD" badge
 - [ ] **UX-11:** Time inputs accept `mm:ss` and total seconds; display always `mm:ss`
-- [ ] **UX-12:** Injury toggle ON → display "Discuss with your medical provider and UFPM regarding AF Form 469 exemptions."
-- [ ] **UX-13:** Altitude state toggle → base dropdown
-- [ ] Feedback section: RPE (5 levels), Sleep (4), Nutrition (4), Injured (bool), Environment (6-flag bitmask), Confidence (5 levels)
-- [ ] All feedback fields encoded into S-code V3
 
-**Acceptance:** All UX rules pass visual inspection. Feedback fields round-trip through S-code.
+**Acceptance:** All UX rules pass visual inspection.
 
 ---
 
