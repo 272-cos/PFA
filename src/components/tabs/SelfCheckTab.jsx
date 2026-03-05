@@ -205,6 +205,13 @@ export default function SelfCheckTab() {
     }
 
     try {
+      // IV-04: Age must be 17-65 at the self-check date (not just at profile creation)
+      const ageAtCheck = calculateAge(demographics.dob, assessmentDate)
+      if (ageAtCheck < 17 || ageAtCheck > 65) {
+        setError('Age must be 17-65 at the self-check date for USAF service range.')
+        return
+      }
+
       // IV-05: Height range
       if (!bodyCompExempt && heightInches) {
         const h = parseFloat(heightInches)
@@ -421,7 +428,7 @@ export default function SelfCheckTab() {
                     <li key={i}>{fc.type.charAt(0).toUpperCase() + fc.type.slice(1)} below {fc.minimum}% minimum ({fc.percentage.toFixed(1)}%)</li>
                   ))}
                   {scores.composite.walkComponents?.some(w => w.pass === false) && (
-                    <li>2km Walk not passed</li>
+                    <li>2km Walk not passed - overall PFA failure</li>
                   )}
                 </ul>
               )}
@@ -512,7 +519,7 @@ export default function SelfCheckTab() {
                       if (t > 7200) return 'Maximum run time is 2:00:00.'
                       return formatTime(t)
                     })()
-                  : 'Invalid format - use MM:SS or whole minutes'}
+                  : 'Invalid format - use MM:SS or total seconds'}
               </p>
             )}
             {cardioExercise === EXERCISES.HAMR && cardioValue && cardioValue.includes(':') && !cardioExempt && !isTimeIncomplete(cardioValue) && (
@@ -600,7 +607,7 @@ export default function SelfCheckTab() {
                       if (t > 600) return 'Maximum plank entry is 10 minutes'
                       return formatTime(t)
                     })()
-                  : 'Invalid format - use MM:SS or whole minutes'}
+                  : 'Invalid format - use MM:SS or total seconds'}
               </p>
             )}
           </div>

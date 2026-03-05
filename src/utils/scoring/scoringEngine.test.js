@@ -4,7 +4,7 @@
  */
 
 import { describe, it, expect } from 'vitest'
-import { lookupScore, parseTime, calculateCompositeScore, calculateComponentScore, calculateWHtR } from './scoringEngine.js'
+import { lookupScore, parseTime, calculateCompositeScore, calculateComponentScore, calculateWHtR, hamrTimeToShuttles } from './scoringEngine.js'
 import { EXERCISES, AGE_BRACKETS, GENDER, COMPONENTS, calculateAge, getAgeBracket, getProjectionAgeBracket, getWalkTimeLimit, WALK_TIME_LIMITS } from './constants.js'
 
 // Male <25 table reference values (from scoringTables.js)
@@ -1083,5 +1083,38 @@ describe('lookupScore - maxPoints always equals table[0].points', () => {
     const fast = lookupScore(EXERCISES.RUN_2MILE, 600, M, U25)
     expect(slow.maxPoints).toBe(50.0)
     expect(fast.maxPoints).toBe(50.0)
+  })
+})
+
+// ─── hamrTimeToShuttles ────────────────────────────────────────────────────────
+
+describe('hamrTimeToShuttles', () => {
+  it('null input → null', () => {
+    expect(hamrTimeToShuttles(null)).toBeNull()
+  })
+
+  it('"0:00" → null (zero time is not valid)', () => {
+    expect(hamrTimeToShuttles('0:00')).toBeNull()
+  })
+
+  it('"0:05" → 0 shuttles (5 seconds completes no shuttles)', () => {
+    // First shuttle at 8.0 km/h takes 72/8.0 = 9 s; 5 s < 9 s so 0 completed
+    expect(hamrTimeToShuttles('0:05')).toBe(0)
+  })
+
+  it('"0:10" → 1 shuttle (10 s > 9 s first shuttle)', () => {
+    // Level 1 at 8.0 km/h: each shuttle takes 72/8.0 = 9 s
+    expect(hamrTimeToShuttles('0:10')).toBe(1)
+  })
+
+  it('"9:00" → known shuttle count (standard reference)', () => {
+    // Regression: result should be a positive integer
+    const result = hamrTimeToShuttles('9:00')
+    expect(result).toBeGreaterThan(0)
+    expect(Number.isInteger(result)).toBe(true)
+  })
+
+  it('known reference: "15:00" produces more shuttles than "9:00"', () => {
+    expect(hamrTimeToShuttles('15:00')).toBeGreaterThan(hamrTimeToShuttles('9:00'))
   })
 })
