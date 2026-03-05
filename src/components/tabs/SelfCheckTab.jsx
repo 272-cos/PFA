@@ -8,7 +8,6 @@ import { encodeSCode } from '../../utils/codec/scode.js'
 import { EXERCISES, COMPONENTS } from '../../utils/scoring/constants.js'
 import { calculateAge, getAgeBracket, isDiagnosticPeriod, getWalkTimeLimit } from '../../utils/scoring/constants.js'
 import { calculateComponentScore, calculateCompositeScore, calculateWHtR, parseTime, formatTime, isTimeIncomplete, hamrTimeToShuttles } from '../../utils/scoring/scoringEngine.js'
-import { ENV_FLAGS, BASE_REGISTRY } from '../../utils/codec/bitpack.js'
 
 export default function SelfCheckTab() {
   const { demographics, addSCode, dcode } = useApp()
@@ -44,15 +43,6 @@ export default function SelfCheckTab() {
   const [heightError, setHeightError] = useState('')
   const [waistError, setWaistError] = useState('')
 
-  // Feedback fields
-  const [feedbackRpe, setFeedbackRpe] = useState(3)           // 1-5
-  const [feedbackSleep, setFeedbackSleep] = useState(2)       // 0-3 (0=poor, 1=fair, 2=good, 3=excellent)
-  const [feedbackNutrition, setFeedbackNutrition] = useState(2) // 0-3 (0=fasted, 1=light, 2=normal, 3=heavy)
-  const [feedbackInjured, setFeedbackInjured] = useState(false)
-  const [feedbackEnvFlags, setFeedbackEnvFlags] = useState(0) // 6-bit bitmask
-  const [feedbackConfidence, setFeedbackConfidence] = useState(3) // 1-5
-  const [feedbackBaseId, setFeedbackBaseId] = useState(0)     // 0=N/A, 1-7
-
   // UI state
   const [scode, setSCode] = useState('')
   const [error, setError] = useState('')
@@ -66,13 +56,6 @@ export default function SelfCheckTab() {
       setWalkTime('')
     }
   }, [cardioExempt])
-
-  // Reset base_id when altitude env flag is cleared
-  useEffect(() => {
-    if (!(feedbackEnvFlags & ENV_FLAGS.ALTITUDE_NOTABLE)) {
-      setFeedbackBaseId(0)
-    }
-  }, [feedbackEnvFlags])
 
   // Check if we have demographics
   const hasDemographics = demographics && demographics.dob && demographics.gender
@@ -212,10 +195,6 @@ export default function SelfCheckTab() {
     }
   }
 
-  const toggleEnvFlag = (flag) => {
-    setFeedbackEnvFlags(prev => prev ^ flag)
-  }
-
   const handleGenerateSCode = () => {
     setError('')
     setSuccess('')
@@ -320,13 +299,13 @@ export default function SelfCheckTab() {
           exempt: false
         } : bodyCompExempt ? { heightInches: null, waistInches: null, exempt: true } : null,
         feedback: {
-          baseId: feedbackBaseId,
-          rpe: feedbackRpe,
-          sleepQuality: feedbackSleep,
-          nutrition: feedbackNutrition,
-          injured: feedbackInjured,
-          environmentFlags: feedbackEnvFlags,
-          confidence: feedbackConfidence,
+          baseId: 0,
+          rpe: 3,
+          sleepQuality: 2,
+          nutrition: 2,
+          injured: false,
+          environmentFlags: 0,
+          confidence: 3,
         },
       }
 
@@ -410,8 +389,6 @@ export default function SelfCheckTab() {
     const remainingInches = Math.round(totalInches % 12)
     return `${feet}' ${remainingInches}"`
   }
-
-  const altitudeSelected = !!(feedbackEnvFlags & ENV_FLAGS.ALTITUDE_NOTABLE)
 
   return (
     <div className="space-y-6">
@@ -693,141 +670,6 @@ export default function SelfCheckTab() {
             All components exempt. No composite score possible.
           </div>
         )}
-      </div>
-
-      {/* Feedback Section */}
-      <div className="bg-white rounded-lg shadow-md p-6">
-        <h2 className="text-lg font-bold text-gray-900 mb-1">Session Context</h2>
-        <p className="text-xs text-gray-500 mb-5">Optional - helps contextualize your results and improve trend tracking.</p>
-
-        {/* RPE */}
-        <div className="mb-5">
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Perceived Effort (RPE)
-          </label>
-          <SegmentedControl
-            options={[
-              { value: 1, label: 'Easy' },
-              { value: 2, label: 'Moderate' },
-              { value: 3, label: 'Hard' },
-              { value: 4, label: 'V. Hard' },
-              { value: 5, label: 'Max' },
-            ]}
-            value={feedbackRpe}
-            onChange={setFeedbackRpe}
-          />
-        </div>
-
-        {/* Sleep Quality */}
-        <div className="mb-5">
-          <label className="block text-sm font-medium text-gray-700 mb-2">Sleep Quality (prior night)</label>
-          <SegmentedControl
-            options={[
-              { value: 0, label: 'Poor' },
-              { value: 1, label: 'Fair' },
-              { value: 2, label: 'Good' },
-              { value: 3, label: 'Excellent' },
-            ]}
-            value={feedbackSleep}
-            onChange={setFeedbackSleep}
-          />
-        </div>
-
-        {/* Nutrition */}
-        <div className="mb-5">
-          <label className="block text-sm font-medium text-gray-700 mb-2">Pre-Assessment Nutrition</label>
-          <SegmentedControl
-            options={[
-              { value: 0, label: 'Fasted' },
-              { value: 1, label: 'Light' },
-              { value: 2, label: 'Normal' },
-              { value: 3, label: 'Heavy' },
-            ]}
-            value={feedbackNutrition}
-            onChange={setFeedbackNutrition}
-          />
-        </div>
-
-        {/* Confidence */}
-        <div className="mb-5">
-          <label className="block text-sm font-medium text-gray-700 mb-2">Confidence Going In</label>
-          <SegmentedControl
-            options={[
-              { value: 1, label: 'Low' },
-              { value: 2, label: 'Fair' },
-              { value: 3, label: 'Moderate' },
-              { value: 4, label: 'High' },
-              { value: 5, label: 'Peak' },
-            ]}
-            value={feedbackConfidence}
-            onChange={setFeedbackConfidence}
-          />
-        </div>
-
-        {/* Environment Flags */}
-        <div className="mb-5">
-          <label className="block text-sm font-medium text-gray-700 mb-2">Conditions</label>
-          <div className="flex flex-wrap gap-2">
-            {[
-              { flag: ENV_FLAGS.HOT,              label: 'Hot' },
-              { flag: ENV_FLAGS.COLD,             label: 'Cold' },
-              { flag: ENV_FLAGS.HUMID,            label: 'Humid' },
-              { flag: ENV_FLAGS.WINDY,            label: 'Windy' },
-              { flag: ENV_FLAGS.ALTITUDE_NOTABLE, label: 'Altitude' },
-              { flag: ENV_FLAGS.INDOOR,           label: 'Indoor' },
-            ].map(({ flag, label }) => (
-              <button
-                key={flag}
-                type="button"
-                onClick={() => toggleEnvFlag(flag)}
-                className={`px-3 py-1.5 rounded-full text-sm font-medium border transition-colors ${
-                  feedbackEnvFlags & flag
-                    ? 'bg-blue-600 text-white border-blue-600'
-                    : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
-                }`}
-              >
-                {label}
-              </button>
-            ))}
-          </div>
-
-          {/* UX-13: Altitude base dropdown - shown when altitude flag is selected */}
-          {altitudeSelected && (
-            <div className="mt-3">
-              <label className="block text-xs font-medium text-gray-600 mb-1">Installation (high-altitude)</label>
-              <select
-                value={feedbackBaseId}
-                onChange={(e) => setFeedbackBaseId(parseInt(e.target.value, 10))}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
-              >
-                <option value={0}>Not listed / Unknown</option>
-                {BASE_REGISTRY.filter(Boolean).map((base) => (
-                  <option key={base.id} value={base.id}>
-                    {base.name}, {base.state} ({base.elevationFt.toLocaleString()} ft)
-                  </option>
-                ))}
-              </select>
-            </div>
-          )}
-        </div>
-
-        {/* Injured Toggle */}
-        <div className="mb-2">
-          <div className="flex items-center gap-3">
-            <span className="text-sm font-medium text-gray-700">Injury / Physical Limitation</span>
-            <ToggleSwitch
-              checked={feedbackInjured}
-              onChange={setFeedbackInjured}
-              label={feedbackInjured ? 'Yes' : 'No'}
-            />
-          </div>
-          {/* UX-12: Injury advisory message */}
-          {feedbackInjured && (
-            <div className="mt-2 p-3 bg-amber-50 border border-amber-300 rounded-lg text-amber-800 text-sm">
-              Discuss with your medical provider and UFPM regarding AF Form 469 exemptions.
-            </div>
-          )}
-        </div>
       </div>
 
       {/* Generate S-Code */}

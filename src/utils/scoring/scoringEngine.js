@@ -422,8 +422,8 @@ export function parseTime(timeStr) {
     return total > 0 ? total : null
   }
 
-  // No colon: treat as whole minutes (e.g. "18" -> 18:00 -> 1080 s)
-  const mins = parseInt(timeStr, 10)
-  if (isNaN(mins) || mins <= 0) return null
-  return mins * 60
+  // No colon: treat as total seconds (e.g. "810" -> 810 s = 13:30)
+  const secs = parseInt(timeStr, 10)
+  if (isNaN(secs) || secs <= 0) return null
+  return secs
 }

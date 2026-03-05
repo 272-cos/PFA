@@ -221,8 +221,6 @@ When AF publishes altitude correction tables, factors will be per-base. The regi
 | UX-09 | Code paste field strips whitespace/newlines. | Notes apps add breaks. |
 | UX-10 | Diagnostic period auto-detected from self-check date. | No manual checkbox. |
 | UX-11 | Time inputs accept mm:ss and total seconds. Display always mm:ss. | Some think in seconds, others mm:ss. |
-| UX-12 | Injury = Yes → guidance text. | Directive, not diagnostic. |
-| UX-13 | Altitude: state toggle → base dropdown. | Simple. Gated. 7 options. |
 
 ### 5.6 Report
 
