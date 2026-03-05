@@ -79,7 +79,7 @@ src/
   | Strength    | 9    | exercise:1, exempt:1, value:7                |
   | Core        | 14   | exercise:2, exempt:1, value:11               |
   | Body Comp   | 25   | exempt:1, height:11, waist:10, offset:3      |
-  | Feedback    | 20   | base_id:3, rpe:3, sleep:2, nutrition:2, injured:1, env:6, confidence:3 |
+  | Reserved    | 20   | base_id:3 (altitude), reserved:17                                    |
 
 - **Backward compat:** S2-prefixed codes decoded via V2 path
 

@@ -8,6 +8,7 @@ import { encodeSCode } from '../../utils/codec/scode.js'
 import { EXERCISES, COMPONENTS } from '../../utils/scoring/constants.js'
 import { calculateAge, getAgeBracket, isDiagnosticPeriod, getWalkTimeLimit } from '../../utils/scoring/constants.js'
 import { calculateComponentScore, calculateCompositeScore, calculateWHtR, parseTime, formatTime, isTimeIncomplete, hamrTimeToShuttles } from '../../utils/scoring/scoringEngine.js'
+import { ENV_FLAGS, BASE_REGISTRY } from '../../utils/codec/bitpack.js'
 
 export default function SelfCheckTab() {
   const { demographics, addSCode, dcode } = useApp()
@@ -43,6 +44,15 @@ export default function SelfCheckTab() {
   const [heightError, setHeightError] = useState('')
   const [waistError, setWaistError] = useState('')
 
+  // Feedback fields
+  const [feedbackRpe, setFeedbackRpe] = useState(3)           // 1-5
+  const [feedbackSleep, setFeedbackSleep] = useState(2)       // 0-3 (0=poor, 1=fair, 2=good, 3=excellent)
+  const [feedbackNutrition, setFeedbackNutrition] = useState(2) // 0-3 (0=fasted, 1=light, 2=normal, 3=heavy)
+  const [feedbackInjured, setFeedbackInjured] = useState(false)
+  const [feedbackEnvFlags, setFeedbackEnvFlags] = useState(0) // 6-bit bitmask
+  const [feedbackConfidence, setFeedbackConfidence] = useState(3) // 1-5
+  const [feedbackBaseId, setFeedbackBaseId] = useState(0)     // 0=N/A, 1-7
+
   // UI state
   const [scode, setSCode] = useState('')
   const [error, setError] = useState('')
@@ -56,6 +66,13 @@ export default function SelfCheckTab() {
       setWalkTime('')
     }
   }, [cardioExempt])
+
+  // Reset base_id when altitude env flag is cleared
+  useEffect(() => {
+    if (!(feedbackEnvFlags & ENV_FLAGS.ALTITUDE_NOTABLE)) {
+      setFeedbackBaseId(0)
+    }
+  }, [feedbackEnvFlags])
 
   // Check if we have demographics
   const hasDemographics = demographics && demographics.dob && demographics.gender
@@ -161,7 +178,7 @@ export default function SelfCheckTab() {
       console.error('Error calculating scores:', err)
       setScores(null)
     }
-  }, [hasDemographics, demographics, cardioExercise, cardioValue, cardioExempt, walkSelected, walkTime, walkPass, strengthExercise, strengthValue, strengthExempt, coreExercise, coreValue, coreExempt, heightInches, waistInches, bodyCompExempt])
+  }, [hasDemographics, demographics, assessmentDate, cardioExercise, cardioValue, cardioExempt, walkSelected, walkTime, walkPass, strengthExercise, strengthValue, strengthExempt, coreExercise, coreValue, coreExempt, heightInches, waistInches, bodyCompExempt])
 
   // IV-05: Height must be 48-84 inches
   const handleHeightChange = (e) => {
@@ -193,6 +210,10 @@ export default function SelfCheckTab() {
     } else {
       setWaistError('')
     }
+  }
+
+  const toggleEnvFlag = (flag) => {
+    setFeedbackEnvFlags(prev => prev ^ flag)
   }
 
   const handleGenerateSCode = () => {
@@ -298,6 +319,15 @@ export default function SelfCheckTab() {
           waistInches: parseFloat(waistInches),
           exempt: false
         } : bodyCompExempt ? { heightInches: null, waistInches: null, exempt: true } : null,
+        feedback: {
+          baseId: feedbackBaseId,
+          rpe: feedbackRpe,
+          sleepQuality: feedbackSleep,
+          nutrition: feedbackNutrition,
+          injured: feedbackInjured,
+          environmentFlags: feedbackEnvFlags,
+          confidence: feedbackConfidence,
+        },
       }
 
       const code = encodeSCode(assessment)
@@ -381,20 +411,30 @@ export default function SelfCheckTab() {
     return `${feet}' ${remainingInches}"`
   }
 
+  const altitudeSelected = !!(feedbackEnvFlags & ENV_FLAGS.ALTITUDE_NOTABLE)
+
   return (
     <div className="space-y-6">
-      {/* Live Score Banner */}
+      {/* UX-01: Live Score Banner - updates on every input change */}
       {scores && scores.composite && scores.composite.composite !== null && (
         <div className={`rounded-lg p-4 ${scores.composite.pass ? 'bg-green-50 border-2 border-green-500' : 'bg-red-50 border-2 border-red-500'}`}>
           <div className="flex items-center justify-between">
             <div>
-              <h3 className="text-2xl font-bold">
-                {scores.composite.composite.toFixed(1)} / 100
-              </h3>
-              <p className={`text-sm font-medium ${scores.composite.pass ? 'text-green-800' : 'text-red-800'}`}>
-                {scores.composite.pass ? '✓ PASSING' : '✗ FAILING'}
-                {isDiagnostic && ' (Diagnostic Period)'}
-              </p>
+              <div className="flex items-center gap-2 flex-wrap">
+                <h3 className="text-2xl font-bold">
+                  {scores.composite.composite.toFixed(1)} / 100
+                </h3>
+                {/* UX-02: Pass/fail badge */}
+                <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-bold ${scores.composite.pass ? 'bg-green-600 text-white' : 'bg-red-600 text-white'}`}>
+                  {scores.composite.pass ? 'PASSING' : 'FAILING'}
+                </span>
+                {/* UX-10: Diagnostic period badge */}
+                {isDiagnostic && (
+                  <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-bold bg-blue-100 text-blue-800 border border-blue-300">
+                    DIAGNOSTIC PERIOD
+                  </span>
+                )}
+              </div>
               {!scores.composite.pass && (
                 <ul className="text-xs text-red-700 mt-1 space-y-0.5">
                   {!scores.composite.compositePass && (
@@ -418,25 +458,28 @@ export default function SelfCheckTab() {
         </div>
       )}
 
-      {/* Assessment Date */}
+      {/* Assessment Date + Exercise Components */}
       <div className="bg-white rounded-lg shadow-md p-6">
         <h2 className="text-2xl font-bold text-gray-900 mb-4">Personal Assessment</h2>
 
         {/* IV-01: Self-check date picker - max = today */}
         <div className="mb-6">
           <label className="block text-sm font-medium text-gray-700 mb-2">Assessment Date</label>
-          <input
-            type="date"
-            value={assessmentDate}
-            onChange={(e) => setAssessmentDate(e.target.value)}
-            max={today}
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-          />
-          {isDiagnostic && (
-            <p className="text-xs text-blue-600 mt-1">
-              Diagnostic Period (non-scored)
-            </p>
-          )}
+          <div className="flex items-center gap-3 flex-wrap">
+            <input
+              type="date"
+              value={assessmentDate}
+              onChange={(e) => setAssessmentDate(e.target.value)}
+              max={today}
+              className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            />
+            {/* UX-10: Diagnostic period badge inline with date */}
+            {isDiagnostic && (
+              <span className="inline-flex items-center px-2 py-1 rounded text-xs font-bold bg-blue-100 text-blue-800 border border-blue-300">
+                DIAGNOSTIC PERIOD - non-scored
+              </span>
+            )}
+          </div>
         </div>
 
         {/* Cardio Component */}
@@ -458,51 +501,50 @@ export default function SelfCheckTab() {
             />
           }
         >
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Exercise</label>
-              <select
-                value={cardioExercise}
-                onChange={(e) => setCardioExercise(e.target.value)}
-                disabled={cardioExempt}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg disabled:bg-gray-100"
-              >
-                <option value={EXERCISES.RUN_2MILE}>2-Mile Run</option>
-                <option value={EXERCISES.HAMR}>HAMR Shuttle</option>
-              </select>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                {cardioExercise === EXERCISES.RUN_2MILE ? 'Time (mm:ss)' : 'Shuttles'}
-              </label>
-              <input
-                type="text"
-                value={cardioValue}
-                onChange={(e) => setCardioValue(e.target.value)}
-                disabled={cardioExempt}
-                placeholder={cardioExercise === EXERCISES.RUN_2MILE ? '13:30' : '94'}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg disabled:bg-gray-100"
-              />
-              {cardioExercise === EXERCISES.RUN_2MILE && cardioValue && !cardioExempt && !isTimeIncomplete(cardioValue) && (
-                <p className="text-xs mt-1" style={{ color: parseTime(cardioValue) != null && parseTime(cardioValue) > 0 && parseTime(cardioValue) <= 7200 ? '#6b7280' : '#ef4444' }}>
-                  {parseTime(cardioValue) != null
-                    ? (() => {
-                        const t = parseTime(cardioValue)
-                        if (t === 0) return 'Enter a valid time between 0:01 and 2:00:00.'
-                        if (t > 7200) return 'Maximum run time is 2:00:00.'
-                        return formatTime(t)
-                      })()
-                    : 'Invalid format - use MM:SS or whole minutes'}
-                </p>
-              )}
-              {cardioExercise === EXERCISES.HAMR && cardioValue && cardioValue.includes(':') && !cardioExempt && !isTimeIncomplete(cardioValue) && (
-                <p className="text-xs mt-1" style={{ color: hamrTimeToShuttles(cardioValue) != null ? '#6b7280' : '#ef4444' }}>
-                  {hamrTimeToShuttles(cardioValue) != null
-                    ? `Converted: ${hamrTimeToShuttles(cardioValue)} shuttles`
-                    : 'Invalid time format'}
-                </p>
-              )}
-            </div>
+          {/* UX-03: Segmented control for exercise type */}
+          <div className="mb-4">
+            <label className="block text-sm font-medium text-gray-700 mb-2">Exercise</label>
+            <SegmentedControl
+              options={[
+                { value: EXERCISES.RUN_2MILE, label: '2-Mile Run' },
+                { value: EXERCISES.HAMR, label: 'HAMR Shuttle' },
+              ]}
+              value={cardioExercise}
+              onChange={setCardioExercise}
+              disabled={cardioExempt}
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              {cardioExercise === EXERCISES.RUN_2MILE ? 'Time (mm:ss)' : 'Shuttles'}
+            </label>
+            <input
+              type="text"
+              value={cardioValue}
+              onChange={(e) => setCardioValue(e.target.value)}
+              disabled={cardioExempt}
+              placeholder={cardioExercise === EXERCISES.RUN_2MILE ? '13:30' : '94'}
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg disabled:bg-gray-100"
+            />
+            {cardioExercise === EXERCISES.RUN_2MILE && cardioValue && !cardioExempt && !isTimeIncomplete(cardioValue) && (
+              <p className="text-xs mt-1" style={{ color: parseTime(cardioValue) != null && parseTime(cardioValue) > 0 && parseTime(cardioValue) <= 7200 ? '#6b7280' : '#ef4444' }}>
+                {parseTime(cardioValue) != null
+                  ? (() => {
+                      const t = parseTime(cardioValue)
+                      if (t === 0) return 'Enter a valid time between 0:01 and 2:00:00.'
+                      if (t > 7200) return 'Maximum run time is 2:00:00.'
+                      return formatTime(t)
+                    })()
+                  : 'Invalid format - use MM:SS or whole minutes'}
+              </p>
+            )}
+            {cardioExercise === EXERCISES.HAMR && cardioValue && cardioValue.includes(':') && !cardioExempt && !isTimeIncomplete(cardioValue) && (
+              <p className="text-xs mt-1" style={{ color: hamrTimeToShuttles(cardioValue) != null ? '#6b7280' : '#ef4444' }}>
+                {hamrTimeToShuttles(cardioValue) != null
+                  ? `Converted: ${hamrTimeToShuttles(cardioValue)} shuttles`
+                  : 'Invalid time format'}
+              </p>
+            )}
           </div>
         </ComponentSection>
 
@@ -513,31 +555,30 @@ export default function SelfCheckTab() {
           onExemptChange={setStrengthExempt}
           score={scores?.components.find(c => c.type === COMPONENTS.STRENGTH)}
         >
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Exercise</label>
-              <select
-                value={strengthExercise}
-                onChange={(e) => setStrengthExercise(e.target.value)}
-                disabled={strengthExempt}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg disabled:bg-gray-100"
-              >
-                <option value={EXERCISES.PUSHUPS}>Push-ups (1 min)</option>
-                <option value={EXERCISES.HRPU}>Hand-Release Push-ups (2 min)</option>
-              </select>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Reps</label>
-              <input
-                type="number"
-                value={strengthValue}
-                onChange={(e) => setStrengthValue(e.target.value)}
-                disabled={strengthExempt}
-                placeholder="42"
-                min="0"
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg disabled:bg-gray-100"
-              />
-            </div>
+          {/* UX-03: Segmented control for exercise type */}
+          <div className="mb-4">
+            <label className="block text-sm font-medium text-gray-700 mb-2">Exercise</label>
+            <SegmentedControl
+              options={[
+                { value: EXERCISES.PUSHUPS, label: 'Push-ups (1 min)' },
+                { value: EXERCISES.HRPU, label: 'Hand-Release (2 min)' },
+              ]}
+              value={strengthExercise}
+              onChange={setStrengthExercise}
+              disabled={strengthExempt}
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Reps</label>
+            <input
+              type="number"
+              value={strengthValue}
+              onChange={(e) => setStrengthValue(e.target.value)}
+              disabled={strengthExempt}
+              placeholder="42"
+              min="0"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg disabled:bg-gray-100"
+            />
           </div>
         </ComponentSection>
 
@@ -548,44 +589,43 @@ export default function SelfCheckTab() {
           onExemptChange={setCoreExempt}
           score={scores?.components.find(c => c.type === COMPONENTS.CORE)}
         >
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Exercise</label>
-              <select
-                value={coreExercise}
-                onChange={(e) => setCoreExercise(e.target.value)}
-                disabled={coreExempt}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg disabled:bg-gray-100"
-              >
-                <option value={EXERCISES.SITUPS}>Sit-ups (1 min)</option>
-                <option value={EXERCISES.CLRC}>Reverse Crunches (2 min)</option>
-                <option value={EXERCISES.PLANK}>Forearm Plank (max time)</option>
-              </select>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                {coreExercise === EXERCISES.PLANK ? 'Time (mm:ss)' : 'Reps'}
-              </label>
-              <input
-                type="text"
-                value={coreValue}
-                onChange={(e) => setCoreValue(e.target.value)}
-                disabled={coreExempt}
-                placeholder={coreExercise === EXERCISES.PLANK ? '2:30' : '42'}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg disabled:bg-gray-100"
-              />
-              {coreExercise === EXERCISES.PLANK && coreValue && !coreExempt && !isTimeIncomplete(coreValue) && (
-                <p className="text-xs mt-1" style={{ color: parseTime(coreValue) != null ? '#6b7280' : '#ef4444' }}>
-                  {parseTime(coreValue) != null
-                    ? (() => {
-                        const t = parseTime(coreValue)
-                        if (t > 600) return 'Maximum plank entry is 10 minutes'
-                        return formatTime(t)
-                      })()
-                    : 'Invalid format - use MM:SS or whole minutes'}
-                </p>
-              )}
-            </div>
+          {/* UX-03: Segmented control for exercise type */}
+          <div className="mb-4">
+            <label className="block text-sm font-medium text-gray-700 mb-2">Exercise</label>
+            <SegmentedControl
+              options={[
+                { value: EXERCISES.SITUPS, label: 'Sit-ups (1 min)' },
+                { value: EXERCISES.CLRC, label: 'Rev. Crunches (2 min)' },
+                { value: EXERCISES.PLANK, label: 'Forearm Plank' },
+              ]}
+              value={coreExercise}
+              onChange={setCoreExercise}
+              disabled={coreExempt}
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              {coreExercise === EXERCISES.PLANK ? 'Time (mm:ss)' : 'Reps'}
+            </label>
+            <input
+              type="text"
+              value={coreValue}
+              onChange={(e) => setCoreValue(e.target.value)}
+              disabled={coreExempt}
+              placeholder={coreExercise === EXERCISES.PLANK ? '2:30' : '42'}
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg disabled:bg-gray-100"
+            />
+            {coreExercise === EXERCISES.PLANK && coreValue && !coreExempt && !isTimeIncomplete(coreValue) && (
+              <p className="text-xs mt-1" style={{ color: parseTime(coreValue) != null ? '#6b7280' : '#ef4444' }}>
+                {parseTime(coreValue) != null
+                  ? (() => {
+                      const t = parseTime(coreValue)
+                      if (t > 600) return 'Maximum plank entry is 10 minutes'
+                      return formatTime(t)
+                    })()
+                  : 'Invalid format - use MM:SS or whole minutes'}
+              </p>
+            )}
           </div>
         </ComponentSection>
 
@@ -653,8 +693,145 @@ export default function SelfCheckTab() {
             All components exempt. No composite score possible.
           </div>
         )}
+      </div>
 
-        {/* Generate S-Code Button */}
+      {/* Feedback Section */}
+      <div className="bg-white rounded-lg shadow-md p-6">
+        <h2 className="text-lg font-bold text-gray-900 mb-1">Session Context</h2>
+        <p className="text-xs text-gray-500 mb-5">Optional - helps contextualize your results and improve trend tracking.</p>
+
+        {/* RPE */}
+        <div className="mb-5">
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Perceived Effort (RPE)
+          </label>
+          <SegmentedControl
+            options={[
+              { value: 1, label: 'Easy' },
+              { value: 2, label: 'Moderate' },
+              { value: 3, label: 'Hard' },
+              { value: 4, label: 'V. Hard' },
+              { value: 5, label: 'Max' },
+            ]}
+            value={feedbackRpe}
+            onChange={setFeedbackRpe}
+          />
+        </div>
+
+        {/* Sleep Quality */}
+        <div className="mb-5">
+          <label className="block text-sm font-medium text-gray-700 mb-2">Sleep Quality (prior night)</label>
+          <SegmentedControl
+            options={[
+              { value: 0, label: 'Poor' },
+              { value: 1, label: 'Fair' },
+              { value: 2, label: 'Good' },
+              { value: 3, label: 'Excellent' },
+            ]}
+            value={feedbackSleep}
+            onChange={setFeedbackSleep}
+          />
+        </div>
+
+        {/* Nutrition */}
+        <div className="mb-5">
+          <label className="block text-sm font-medium text-gray-700 mb-2">Pre-Assessment Nutrition</label>
+          <SegmentedControl
+            options={[
+              { value: 0, label: 'Fasted' },
+              { value: 1, label: 'Light' },
+              { value: 2, label: 'Normal' },
+              { value: 3, label: 'Heavy' },
+            ]}
+            value={feedbackNutrition}
+            onChange={setFeedbackNutrition}
+          />
+        </div>
+
+        {/* Confidence */}
+        <div className="mb-5">
+          <label className="block text-sm font-medium text-gray-700 mb-2">Confidence Going In</label>
+          <SegmentedControl
+            options={[
+              { value: 1, label: 'Low' },
+              { value: 2, label: 'Fair' },
+              { value: 3, label: 'Moderate' },
+              { value: 4, label: 'High' },
+              { value: 5, label: 'Peak' },
+            ]}
+            value={feedbackConfidence}
+            onChange={setFeedbackConfidence}
+          />
+        </div>
+
+        {/* Environment Flags */}
+        <div className="mb-5">
+          <label className="block text-sm font-medium text-gray-700 mb-2">Conditions</label>
+          <div className="flex flex-wrap gap-2">
+            {[
+              { flag: ENV_FLAGS.HOT,              label: 'Hot' },
+              { flag: ENV_FLAGS.COLD,             label: 'Cold' },
+              { flag: ENV_FLAGS.HUMID,            label: 'Humid' },
+              { flag: ENV_FLAGS.WINDY,            label: 'Windy' },
+              { flag: ENV_FLAGS.ALTITUDE_NOTABLE, label: 'Altitude' },
+              { flag: ENV_FLAGS.INDOOR,           label: 'Indoor' },
+            ].map(({ flag, label }) => (
+              <button
+                key={flag}
+                type="button"
+                onClick={() => toggleEnvFlag(flag)}
+                className={`px-3 py-1.5 rounded-full text-sm font-medium border transition-colors ${
+                  feedbackEnvFlags & flag
+                    ? 'bg-blue-600 text-white border-blue-600'
+                    : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+                }`}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+
+          {/* UX-13: Altitude base dropdown - shown when altitude flag is selected */}
+          {altitudeSelected && (
+            <div className="mt-3">
+              <label className="block text-xs font-medium text-gray-600 mb-1">Installation (high-altitude)</label>
+              <select
+                value={feedbackBaseId}
+                onChange={(e) => setFeedbackBaseId(parseInt(e.target.value, 10))}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+              >
+                <option value={0}>Not listed / Unknown</option>
+                {BASE_REGISTRY.filter(Boolean).map((base) => (
+                  <option key={base.id} value={base.id}>
+                    {base.name}, {base.state} ({base.elevationFt.toLocaleString()} ft)
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
+        </div>
+
+        {/* Injured Toggle */}
+        <div className="mb-2">
+          <div className="flex items-center gap-3">
+            <span className="text-sm font-medium text-gray-700">Injury / Physical Limitation</span>
+            <ToggleSwitch
+              checked={feedbackInjured}
+              onChange={setFeedbackInjured}
+              label={feedbackInjured ? 'Yes' : 'No'}
+            />
+          </div>
+          {/* UX-12: Injury advisory message */}
+          {feedbackInjured && (
+            <div className="mt-2 p-3 bg-amber-50 border border-amber-300 rounded-lg text-amber-800 text-sm">
+              Discuss with your medical provider and UFPM regarding AF Form 469 exemptions.
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Generate S-Code */}
+      <div className="bg-white rounded-lg shadow-md p-6">
         <button
           onClick={handleGenerateSCode}
           className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-4 rounded-lg transition-colors"
@@ -796,35 +973,79 @@ function WalkSection({ walkSelected, setWalkSelected, walkTime, setWalkTime, wal
   )
 }
 
+// UX-03: Segmented control - replaces dropdowns for exercise selection
+function SegmentedControl({ options, value, onChange, disabled = false }) {
+  return (
+    <div className={`flex rounded-lg border overflow-hidden ${disabled ? 'border-gray-200' : 'border-gray-300'}`}>
+      {options.map((opt, i) => {
+        const isSelected = value === opt.value
+        return (
+          <button
+            key={opt.value}
+            type="button"
+            disabled={disabled}
+            onClick={() => !disabled && onChange(opt.value)}
+            className={[
+              'flex-1 py-2 px-2 text-sm font-medium transition-colors',
+              i < options.length - 1 ? (disabled ? 'border-r border-gray-200' : 'border-r border-gray-300') : '',
+              isSelected
+                ? (disabled ? 'bg-gray-300 text-gray-600 cursor-not-allowed' : 'bg-blue-600 text-white')
+                : (disabled ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : 'bg-white text-gray-700 hover:bg-gray-50 cursor-pointer'),
+            ].join(' ')}
+          >
+            {opt.label}
+          </button>
+        )
+      })}
+    </div>
+  )
+}
+
+// UX-04: Toggle switch for exemption and injury
+function ToggleSwitch({ checked, onChange, label }) {
+  return (
+    <label className="flex items-center gap-2 cursor-pointer select-none">
+      <div className="relative" onClick={() => onChange(!checked)}>
+        <div className={`w-10 h-6 rounded-full transition-colors duration-200 ${checked ? 'bg-blue-600' : 'bg-gray-300'}`} />
+        <div className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform duration-200 ${checked ? 'translate-x-4' : 'translate-x-0'}`} />
+      </div>
+      {label && <span className="text-sm text-gray-700">{label}</span>}
+    </label>
+  )
+}
+
 // Component Section with score display
 function ComponentSection({ title, exempt, onExemptChange, score, children, exemptContent }) {
   return (
     <div className="mb-6 pb-6 border-b border-gray-200">
-      <div className="flex items-center justify-between mb-4">
-        <h3 className="text-lg font-bold text-gray-900">{title}</h3>
-        <div className="flex items-center gap-4">
+      <div className="flex items-start justify-between mb-4 gap-2">
+        <h3 className="text-lg font-bold text-gray-900 pt-0.5">{title}</h3>
+        <div className="flex items-center gap-3 flex-shrink-0">
+          {/* UX-02: Component pass/fail badges alongside points */}
           {score && score.tested && (
             <div className="text-right">
-              <p className={`text-lg font-bold ${score.pass ? 'text-green-600' : 'text-red-600'}`}>
-                {score.points.toFixed(1)} / {score.maxPoints} pts
+              <p className={`text-base font-bold ${score.pass ? 'text-green-600' : 'text-red-600'}`}>
+                {score.points.toFixed(1)} / {score.maxPoints}
               </p>
-              <p className="text-xs text-gray-600">
-                {score.percentage.toFixed(1)}% {score.pass ? '✓' : '✗'}
-              </p>
+              <div className="flex justify-end items-center gap-1 mt-0.5">
+                <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-xs font-bold ${score.pass ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                  {score.pass ? 'PASS' : 'FAIL'}
+                </span>
+                <span className="text-xs text-gray-500">{score.percentage.toFixed(1)}%</span>
+              </div>
             </div>
           )}
           {score && score.exempt && (
-            <p className="text-sm text-gray-600">EXEMPT</p>
+            <span className="text-sm text-gray-500 font-medium">EXEMPT</span>
           )}
-          <label className="flex items-center cursor-pointer">
-            <input
-              type="checkbox"
+          {/* UX-04: Toggle switch for exemption */}
+          <div className="flex items-center gap-1.5">
+            <span className="text-xs text-gray-500">Exempt</span>
+            <ToggleSwitch
               checked={exempt}
-              onChange={(e) => onExemptChange(e.target.checked)}
-              className="mr-2"
+              onChange={onExemptChange}
             />
-            <span className="text-sm text-gray-700">Exempt</span>
-          </label>
+          </div>
         </div>
       </div>
       {!exempt && children}
@@ -832,4 +1053,3 @@ function ComponentSection({ title, exempt, onExemptChange, score, children, exem
     </div>
   )
 }
-
