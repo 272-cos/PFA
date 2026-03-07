@@ -526,7 +526,7 @@ export default function ProjectTab() {
               <span className="font-medium text-gray-500">Projection accuracy: </span>
               1 entry = flat estimate (current score held forward) - log more check-ins to enable trend forecasting.
             </p>
-            <p className="italic">UNOFFICIAL ESTIMATE - for self-assessment only.</p>
+            <p className="italic">Log more check-ins to refine your projected score.</p>
           </div>
         </>
       )}
