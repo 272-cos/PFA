@@ -31,9 +31,9 @@ const COMP_ORDER = ['cardio', 'strength', 'core', 'bodyComp']
 
 
 const CONFIDENCE_LABELS = {
-  HIGH:   'Mature Prediction',
-  MEDIUM: 'Established Prediction',
-  LOW:    'Preliminary Prediction',
+  HIGH:   'Data Confidence: Mature',
+  MEDIUM: 'Data Confidence: Established',
+  LOW:    'Data Confidence: Emerging',
 }
 
 const CONFIDENCE_HINTS = {
