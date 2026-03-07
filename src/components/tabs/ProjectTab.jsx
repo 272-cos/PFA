@@ -265,7 +265,7 @@ export default function ProjectTab() {
     if (targetPfaDate && !targetDateInput) {
       setTargetDateInput(targetPfaDate)
     }
-  }, [targetPfaDate]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [targetPfaDate])
 
   // Decode all S-codes (memoized - only re-runs when scodes changes)
   const decodedScodes = useMemo(() => {
