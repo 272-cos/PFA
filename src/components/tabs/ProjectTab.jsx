@@ -205,18 +205,11 @@ function ComponentCard({ compType, proj, currentPct, daysToTarget }) {
       {/* Header row */}
       <div className="flex items-center justify-between gap-2 flex-wrap">
         <span className="font-semibold text-gray-900">{label}</span>
-        <div className="flex items-center gap-2">
           <span className={`text-xs px-2 py-0.5 rounded font-medium ${badgeColor}`}>
             {proj.pass ? 'PASS' : 'FAIL'}
           </span>
-          <span className={`text-xs px-2 py-0.5 rounded ${CONFIDENCE_COLORS[proj.confidence] || 'text-gray-500 bg-gray-50'}`}>
-            {CONFIDENCE_LABELS[proj.confidence] || proj.confidence}
-          </span>
         </div>
       </div>
-      {CONFIDENCE_HINTS[proj.confidence] && (
-        <p className="text-xs text-gray-500 mt-1">{CONFIDENCE_HINTS[proj.confidence]}</p>
-      )}
 
       {/* Projected score */}
       <div className="mt-2 flex items-baseline gap-3 flex-wrap">
