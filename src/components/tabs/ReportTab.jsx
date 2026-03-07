@@ -22,13 +22,11 @@ import {
   EXERCISES,
   COMPONENTS,
   COMPONENT_WEIGHTS,
+  CHART_VERSION,
   calculateAge,
   getAgeBracket,
 } from '../../utils/scoring/constants.js'
 import { generateProjection } from '../../utils/projection/projectionEngine.js'
-
-// RP-04: Scoring chart version constant
-const CHART_VERSION = 'Sep 2025 Provisional'
 
 const EXERCISE_LABELS = {
   [EXERCISES.RUN_2MILE]: '2-Mile Run',
@@ -393,13 +391,15 @@ function ReportPreview({ rank, name, unit, dcode, reportEntries, allExempt, incl
         <div className="flex gap-2">
           <button
             onClick={onCopy}
-            className="px-3 py-1.5 text-sm bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-colors"
+            aria-label={copySuccess ? 'Report text copied' : 'Copy report text to clipboard'}
+            className="px-3 py-2 min-h-[44px] text-sm bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-gray-400"
           >
             {copySuccess ? 'Copied!' : 'Copy Text'}
           </button>
           <button
             onClick={onPrint}
-            className="px-3 py-1.5 text-sm bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
+            aria-label="Print report"
+            className="px-3 py-2 min-h-[44px] text-sm bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
           >
             Print
           </button>

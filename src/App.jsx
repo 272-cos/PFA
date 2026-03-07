@@ -2,6 +2,9 @@ import { AppProvider, useApp } from './context/AppContext.jsx'
 import Header from './components/layout/Header.jsx'
 import TabNavigation from './components/layout/TabNavigation.jsx'
 import OnboardingModal from './components/layout/OnboardingModal.jsx'
+import OfflineBanner from './components/layout/OfflineBanner.jsx'
+import InstallPrompt from './components/layout/InstallPrompt.jsx'
+import ChartUpdateBanner from './components/layout/ChartUpdateBanner.jsx'
 import ProfileTab from './components/tabs/ProfileTab.jsx'
 import SelfCheckTab from './components/tabs/SelfCheckTab.jsx'
 import ProjectTab from './components/tabs/ProjectTab.jsx'
@@ -31,7 +34,9 @@ function AppContent() {
 
   return (
     <div className="min-h-screen bg-gray-100 flex flex-col">
+      <OfflineBanner />
       <Header />
+      <ChartUpdateBanner />
       <TabNavigation />
 
       <main className="flex-1 container mx-auto px-4 py-6 max-w-4xl">
@@ -39,6 +44,7 @@ function AppContent() {
       </main>
 
       {showOnboarding && <OnboardingModal />}
+      <InstallPrompt />
     </div>
   )
 }
