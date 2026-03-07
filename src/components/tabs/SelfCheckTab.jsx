@@ -884,12 +884,9 @@ function ComponentSection({ title, exempt, onExemptChange, score, children, exem
               </div>
             </div>
           )}
-          {score && score.exempt && (
-            <span className="text-sm text-gray-500 font-medium">EXEMPT</span>
-          )}
           {/* UX-04: Toggle switch for exemption */}
           <div className="flex items-center gap-1.5">
-            <span className="text-xs text-gray-500">Exempt</span>
+            <span className={`text-xs ${exempt ? 'text-gray-700 font-bold' : 'text-gray-500'}`}>Exempt</span>
             <ToggleSwitch
               checked={exempt}
               onChange={onExemptChange}
