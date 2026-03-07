@@ -71,6 +71,7 @@ export default function SelfCheckTab() {
   const [success, setSuccess] = useState('')
   const [scores, setScores] = useState(null)
   const [draftRestored, setDraftRestored] = useState(false)
+  const [draftSavedVisible, setDraftSavedVisible] = useState(false)
 
   // ── Draft restore on mount ─────────────────────────────────────────────────
   useEffect(() => {
@@ -112,6 +113,8 @@ export default function SelfCheckTab() {
         coreExercise, coreValue, coreExempt,
         bodyCompExempt, heightInches, waistInches,
       })
+      setDraftSavedVisible(true)
+      setTimeout(() => setDraftSavedVisible(false), 2000)
     }, 500)
     return () => { if (draftTimerRef.current) clearTimeout(draftTimerRef.current) }
   }, [assessmentDate, cardioExercise, cardioValue, cardioExempt, walkSelected, walkTime,
@@ -418,7 +421,7 @@ export default function SelfCheckTab() {
       addSCode(code)
       clearDraft()
       setSelfCheckDirty(false)
-      setSuccess('S-Code generated successfully!')
+      setSuccess('Assessment code generated successfully!')
       return true
     } catch (err) {
       setError(err.message)
@@ -433,7 +436,7 @@ export default function SelfCheckTab() {
     if (!scode) return
     try {
       await navigator.clipboard.writeText(scode)
-      setSuccess('S-Code copied to clipboard!')
+      setSuccess('Assessment code copied to clipboard!')
       setTimeout(() => setSuccess(''), 2000)
     } catch {
       setError('Failed to copy to clipboard')
@@ -509,6 +512,22 @@ export default function SelfCheckTab() {
           Draft restored from previous session
         </div>
       )}
+
+      {/* Draft autosave indicator */}
+      <div className={`flex items-center justify-between transition-opacity duration-500 ${draftSavedVisible ? 'opacity-100' : 'opacity-0'}`} aria-live="polite">
+        <span className="text-xs text-gray-400 flex items-center gap-1.5">
+          <span className="inline-block w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />
+          Draft saved
+        </span>
+      </div>
+
+      {/* Progress indicator - components completed */}
+      <ProgressBar
+        cardioExempt={cardioExempt} cardioValue={cardioValue} walkSelected={walkSelected} walkTime={walkTime}
+        strengthExempt={strengthExempt} strengthValue={strengthValue}
+        coreExempt={coreExempt} coreValue={coreValue}
+        bodyCompExempt={bodyCompExempt} heightInches={heightInches} waistInches={waistInches}
+      />
 
       {/* UX-01: Live Score Banner - updates on every input change */}
       {scores && scores.composite && scores.composite.composite !== null && (
@@ -846,7 +865,7 @@ export default function SelfCheckTab() {
           onClick={handleGenerateSCode}
           className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-4 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
         >
-          Generate S-Code
+          Save Assessment
         </button>
 
         {/* Success/Error Messages */}
@@ -864,26 +883,26 @@ export default function SelfCheckTab() {
         {/* Display S-Code */}
         {scode && (
           <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-            <p className="text-sm font-medium text-gray-700 mb-2">Your S-Code:</p>
+            <p className="text-sm font-medium text-gray-700 mb-2">Your Assessment Code:</p>
             <div className="flex items-center gap-2">
               <p className="font-mono text-sm text-blue-900 flex-1 break-all">{scode}</p>
               <button
                 onClick={copyToClipboard}
-                aria-label="Copy S-Code to clipboard"
+                aria-label="Copy assessment code to clipboard"
                 className="px-3 py-2 min-h-[44px] bg-blue-600 hover:bg-blue-700 text-white text-sm rounded transition-colors whitespace-nowrap focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
               >
                 Copy
               </button>
               <button
                 onClick={shareCode}
-                aria-label="Share S-Code link"
+                aria-label="Share assessment code link"
                 className="px-3 py-2 min-h-[44px] bg-green-600 hover:bg-green-700 text-white text-sm rounded transition-colors whitespace-nowrap focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
               >
                 Share
               </button>
             </div>
             <p className="text-xs text-gray-600 mt-2">
-              Save this code and check the Trajectory tab for personalized improvement tips!
+              Assessment saved! Check the Trajectory tab for personalized improvement tips.
             </p>
           </div>
         )}
@@ -1124,6 +1143,37 @@ function ComponentSection({ title, exempt, onExemptChange, score, children, hide
         </div>
       </div>
       {children}
+    </div>
+  )
+}
+
+// Progress indicator showing X of 4 components completed
+function ProgressBar({ cardioExempt, cardioValue, walkSelected, walkTime,
+  strengthExempt, strengthValue, coreExempt, coreValue,
+  bodyCompExempt, heightInches, waistInches }) {
+
+  const components = [
+    { name: 'Cardio', done: cardioExempt || !!(cardioValue || (walkSelected && walkTime)) },
+    { name: 'Strength', done: strengthExempt || !!strengthValue },
+    { name: 'Core', done: coreExempt || !!coreValue },
+    { name: 'Body Comp', done: bodyCompExempt || !!(heightInches && waistInches) },
+  ]
+  const completed = components.filter(c => c.done).length
+
+  return (
+    <div className="bg-white rounded-lg shadow-sm p-3 border border-gray-100">
+      <div className="flex items-center justify-between mb-2">
+        <span className="text-xs font-medium text-gray-600">{completed} of 4 components completed</span>
+        <span className="text-xs text-gray-400">{Math.round(completed / 4 * 100)}%</span>
+      </div>
+      <div className="flex gap-1.5">
+        {components.map(c => (
+          <div key={c.name} className="flex-1 flex flex-col items-center gap-1">
+            <div className={`w-full h-2 rounded-full transition-colors duration-300 ${c.done ? 'bg-blue-500' : 'bg-gray-200'}`} />
+            <span className={`text-[10px] leading-tight ${c.done ? 'text-blue-600 font-medium' : 'text-gray-400'}`}>{c.name}</span>
+          </div>
+        ))}
+      </div>
     </div>
   )
 }

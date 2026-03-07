@@ -131,7 +131,7 @@ export default function ProfileTab() {
       const code = encodeDCode({ dob, gender })
       const decoded = decodeDCode(code)
       updateDCode(code, decoded)
-      setSuccess('D-Code generated successfully!')
+      setSuccess('Profile code generated successfully!')
     } catch (err) {
       setError(err.message)
     }
@@ -145,13 +145,13 @@ export default function ProfileTab() {
     const trimmed = pasteCode.trim().replace(/\s+/g, '')
 
     if (!trimmed) {
-      setError('Please enter a D-code')
+      setError('Please enter a profile code')
       return
     }
 
     // CS-08 reverse: S-code in D-code field
     if (trimmed.startsWith('S')) {
-      setError('This is an S-code. Paste it in the History tab instead.')
+      setError('This is an assessment code. Paste it in the History tab instead.')
       return
     }
 
@@ -161,9 +161,9 @@ export default function ProfileTab() {
       setDob(decoded.dob.toISOString().split('T')[0])
       setGender(decoded.gender)
       setPasteCode('')
-      setSuccess('D-Code loaded successfully!')
+      setSuccess('Profile code loaded successfully!')
     } catch (err) {
-      setError('Invalid D-code: ' + err.message)
+      setError('Invalid profile code: ' + err.message)
     }
   }
 
@@ -172,7 +172,7 @@ export default function ProfileTab() {
 
     try {
       await navigator.clipboard.writeText(dcode)
-      setSuccess('D-Code copied to clipboard!')
+      setSuccess('Profile code copied to clipboard!')
       setTimeout(() => setSuccess(''), 2000)
     } catch {
       setError('Failed to copy to clipboard')
@@ -263,7 +263,7 @@ export default function ProfileTab() {
             disabled={!dob}
             className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-medium py-3 px-4 rounded-lg transition-colors"
           >
-            Generate D-Code
+            Save Profile
           </button>
 
           {/* Success Message */}
@@ -283,19 +283,19 @@ export default function ProfileTab() {
           {/* Display D-Code */}
           {dcode && (
             <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-              <p className="text-sm font-medium text-gray-700 mb-2">Your D-Code:</p>
+              <p className="text-sm font-medium text-gray-700 mb-2">Your Profile Code:</p>
               <div className="flex items-center gap-2">
                 <p className="font-mono text-lg text-blue-900 flex-1">{dcode}</p>
                 <button
                   onClick={copyToClipboard}
-                  aria-label="Copy D-Code to clipboard"
+                  aria-label="Copy profile code to clipboard"
                   className="px-3 py-2 min-h-[44px] bg-blue-600 hover:bg-blue-700 text-white text-sm rounded transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
                 >
                   Copy
                 </button>
               </div>
               <p className="text-xs text-gray-600 mt-2">
-                Save this code! You'll need it to load your profile on other devices.
+                Save this code to load your profile on other devices.
               </p>
             </div>
           )}
@@ -304,12 +304,12 @@ export default function ProfileTab() {
 
       {/* Paste D-Code Section */}
       <div className="bg-white rounded-lg shadow-md p-6">
-        <h3 className="text-lg font-bold text-gray-900 mb-4">Load Existing D-Code</h3>
+        <h3 className="text-lg font-bold text-gray-900 mb-4">Load Existing Profile</h3>
 
         <div className="space-y-4">
           <div>
             <label htmlFor="paste-dcode" className="block text-sm font-medium text-gray-700 mb-2">
-              Paste D-Code
+              Paste Profile Code
             </label>
             <input
               id="paste-dcode"
@@ -317,7 +317,7 @@ export default function ProfileTab() {
               value={pasteCode}
               onChange={(e) => setPasteCode(e.target.value)}
               placeholder="D1-abc123..."
-              aria-label="Paste your existing D-Code here"
+              aria-label="Paste your existing profile code here"
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent font-mono"
             />
           </div>
@@ -327,7 +327,7 @@ export default function ProfileTab() {
             disabled={!pasteCode.trim()}
             className="w-full bg-gray-600 hover:bg-gray-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-medium py-3 px-4 rounded-lg transition-colors"
           >
-            Load D-Code
+            Load Profile
           </button>
         </div>
       </div>

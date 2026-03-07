@@ -180,35 +180,35 @@ export default function HistoryTab() {
     const trimmed = pasteValue.trim().replace(/\s+/g, '')
 
     if (!trimmed) {
-      setPasteError('Please enter an S-code.')
+      setPasteError('Please enter an assessment code.')
       return
     }
 
     // CS-08: D-code pasted into S-code field
     if (trimmed.startsWith('D')) {
-      setPasteError('This is a D-code. Paste it in the Profile tab instead.')
+      setPasteError('This is a profile code. Paste it in the Profile tab instead.')
       return
     }
 
     if (!trimmed.startsWith('S')) {
-      setPasteError('Invalid code format. S-codes start with "S".')
+      setPasteError('Invalid code format. Assessment codes start with "S".')
       return
     }
 
     if (scodes.includes(trimmed)) {
-      setPasteError('This S-code is already in your history.')
+      setPasteError('This assessment code is already in your history.')
       return
     }
 
     // CS-02/CS-03: validate CRC
     if (!isValidSCode(trimmed)) {
-      setPasteError('Invalid S-code. Check for typos or truncation.')
+      setPasteError('Invalid assessment code. Check for typos or truncation.')
       return
     }
 
     addSCode(trimmed)
     setPasteValue('')
-    setPasteSuccess('S-code added to history.')
+    setPasteSuccess('Assessment added to history.')
     setTimeout(() => setPasteSuccess(''), 3000)
   }
 
@@ -240,7 +240,7 @@ export default function HistoryTab() {
     const text = scodes.join('\n')
     try {
       await navigator.clipboard.writeText(text)
-      setExportSuccess(`${scodes.length} S-code${scodes.length !== 1 ? 's' : ''} copied to clipboard`)
+      setExportSuccess(`${scodes.length} assessment${scodes.length !== 1 ? 's' : ''} copied to clipboard`)
       setTimeout(() => setExportSuccess(''), 3000)
     } catch {
       // Fallback: select textarea content
@@ -295,7 +295,7 @@ export default function HistoryTab() {
 
         <div className="space-y-3">
           <label className="block text-sm font-medium text-gray-700">
-            Add S-Code
+            Add Assessment Code
           </label>
           <div className="flex gap-2">
             <input
@@ -321,7 +321,7 @@ export default function HistoryTab() {
             <p className="text-xs text-green-600">{pasteSuccess}</p>
           )}
           <p className="text-xs text-gray-500">
-            Paste an S-code from a previous session or shared by another device.
+            Paste an assessment code from a previous session or shared by another device.
           </p>
         </div>
 
@@ -348,7 +348,7 @@ export default function HistoryTab() {
         {showImport && (
           <div className="pt-3 space-y-2">
             <label className="block text-sm font-medium text-gray-700">
-              Paste multiple S-codes (one per line or comma-separated)
+              Paste multiple assessment codes (one per line or comma-separated)
             </label>
             <textarea
               value={importValue}
@@ -367,7 +367,7 @@ export default function HistoryTab() {
             {importResult && (
               <div className="text-xs space-y-0.5">
                 {importResult.added > 0 && (
-                  <p className="text-green-600">{importResult.added} S-code{importResult.added !== 1 ? 's' : ''} imported successfully.</p>
+                  <p className="text-green-600">{importResult.added} assessment{importResult.added !== 1 ? 's' : ''} imported successfully.</p>
                 )}
                 {importResult.duplicates > 0 && (
                   <p className="text-gray-500">{importResult.duplicates} already in history (skipped).</p>
@@ -376,7 +376,7 @@ export default function HistoryTab() {
                   <p className="text-red-600">{importResult.invalid} invalid or unrecognized (skipped).</p>
                 )}
                 {importResult.added === 0 && importResult.total > 0 && (
-                  <p className="text-amber-600">No new S-codes were added.</p>
+                  <p className="text-amber-600">No new assessments were added.</p>
                 )}
               </div>
             )}
@@ -392,7 +392,7 @@ export default function HistoryTab() {
           {/* EC-12: Need 3+ S-codes for meaningful trend */}
           {chartData.length < 3 && (
             <p className="text-xs text-amber-600 mb-3">
-              Need 3+ self-checks for a meaningful trend. Showing available data.
+              Need 3+ assessments for a meaningful trend. Showing available data.
             </p>
           )}
 
@@ -424,7 +424,7 @@ export default function HistoryTab() {
       {decodedEntries.length === 0 ? (
         <div className="bg-white rounded-lg shadow-md p-6">
           <p className="text-gray-600">
-            No assessments yet. Complete a self-check or paste an S-code above.
+            No assessments yet. Complete a self-check or paste an assessment code above.
           </p>
         </div>
       ) : (
@@ -454,7 +454,7 @@ function CompositeChart({ data }) {
   if (data.length === 0) {
     return (
       <p className="text-sm text-gray-400 py-8 text-center">
-        No scored assessments to chart. Add profile info and scored S-codes.
+        No scored assessments to chart. Add profile info and scored assessments.
       </p>
     )
   }
@@ -690,7 +690,7 @@ function AssessmentCard({
             <p className="font-mono text-xs text-gray-500 flex-1 break-all">{code}</p>
             <button
               onClick={(e) => { e.stopPropagation(); onCopy() }}
-              aria-label="Copy S-Code to clipboard"
+              aria-label="Copy assessment code to clipboard"
               className="px-2 py-2 min-h-[44px] text-xs bg-gray-100 hover:bg-gray-200 text-gray-700 rounded transition-colors focus:outline-none focus:ring-2 focus:ring-gray-400"
             >
               Copy
