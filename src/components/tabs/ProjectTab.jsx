@@ -522,10 +522,6 @@ export default function ProjectTab() {
                 Minimum threshold
               </span>
             </div>
-            <p className="mt-1">
-              <span className="font-medium text-gray-500">Projection accuracy: </span>
-              1 entry = flat estimate (current score held forward) - log more check-ins to enable trend forecasting.
-            </p>
             <p className="italic">Log more check-ins to refine your projected score.</p>
           </div>
         </>
