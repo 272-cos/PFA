@@ -17,15 +17,12 @@ import {
   generateProjection,
   AMBER_MARGIN,
 } from './projectionEngine.js'
-import { EXERCISES, GENDER, AGE_BRACKETS, COMPONENT_MINIMUMS } from '../scoring/constants.js'
+import { EXERCISES, GENDER, AGE_BRACKETS } from '../scoring/constants.js'
 
 // ─── Shorthand constants ──────────────────────────────────────────────────────
 
 const M = GENDER.MALE
-const F = GENDER.FEMALE
 const U25 = AGE_BRACKETS.UNDER_25
-const A40 = AGE_BRACKETS.AGE_40_44
-const A45 = AGE_BRACKETS.AGE_45_49
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 

@@ -10,25 +10,25 @@
 | Layer | Status | Gap |
 |---|---|---|
 | Scoring tables | ✅ Complete | All 18 brackets. WHTR universal table. |
-| Scoring engine | ⚠️ Partial | Missing: walk pass/fail (SL-07), remaining edge cases EC-02/SL-03-SL-09 unverified |
+| Scoring engine | ✅ Complete | All SL-01 through SL-10, EC edge cases, walk pass/fail |
 | D-code codec | ✅ Complete | Encode/decode/CRC verified |
-| S-code codec | ⚠️ Partial | 87-bit V2; missing: `base_id`, `whtr_offset`, `cardio_walk_pass` |
-| Input validation | ⚠️ Partial | IV-01 through IV-13; most not enforced in UI |
-| Profile tab | ✅ Functional | Missing: URL hydration (`?d=`), Web Share API |
-| Self-Check tab | ⚠️ Partial | Missing: altitude toggle, walk option (IV-11), segmented controls (UX-03), feedback fields, sharing |
-| Projection tab | ❌ Stub | 212-line placeholder; projection engine not built |
-| History tab | ❌ Stub | 38-line placeholder; no chart, no outlier flagging |
-| Report tab | ❌ Stub | 19-line placeholder; no output |
-| URL hydration | ❌ Not started | `?d=`, `?s=`, `?tab=` params |
-| Web Share API | ❌ Not started | `navigator.share()` + copy fallback |
-| PWA / service worker | ❌ Not started | Offline support |
-| Test coverage | ⚠️ Minimal | 2 App render tests; no scoring/codec unit tests |
+| S-code codec | ✅ Complete | S3 V3 full payload: base_id, whtr_offset, cardio_walk_pass; S2 backward compat |
+| Input validation | ✅ Complete | IV-01 through IV-13 all enforced in UI |
+| Profile tab | ✅ Complete | URL hydration (`?d=`), Web Share API, copy fallback |
+| Self-Check tab | ✅ Complete | Walk option, segmented controls (UX-03), live scoring, sharing |
+| Projection tab | ✅ Complete | Linear/log/historical trend models; per-component gap bars |
+| History tab | ✅ Complete | S-code paste, trend chart, outlier toggle, sparklines |
+| Report tab | ✅ Complete | Print + clipboard output, watermark, projection toggle |
+| URL hydration | ✅ Complete | `?d=`, `?s=`, `?tab=` params with error toasts |
+| Web Share API | ✅ Complete | `navigator.share()` + copy fallback |
+| PWA / service worker | ❌ Not started | Offline support (Sprint 7) |
+| Test coverage | ✅ Complete | 270 unit tests across scoring, codec, projection engines |
 
 ---
 
 ## Sprint Plan
 
-### Sprint 2 - Engine Hardening + URL Hydration + S-Code Expansion
+### Sprint 2 - Engine Hardening + URL Hydration + S-Code Expansion [COMPLETE]
 
 **Goal:** All scoring logic correct and tested. S-code carries full design-spec payload. URL hydration works.
 
@@ -104,7 +104,7 @@ Expand S-code bit layout from 87 bits (V2) to full design-spec ~104 bits (V3):
 
 ---
 
-### Sprint 3 - Self-Check UI Completion
+### Sprint 3 - Self-Check UI Completion [COMPLETE]
 
 **Goal:** Self-Check tab fully implements design spec: altitude, walk, feedback fields, all IV/UX rules.
 
@@ -164,7 +164,7 @@ Expand S-code bit layout from 87 bits (V2) to full design-spec ~104 bits (V3):
 
 ---
 
-### Sprint 4 - Projection Engine
+### Sprint 4 - Projection Engine [COMPLETE]
 
 **Goal:** Full projection engine per §9 + §5.3, displayed in Project tab.
 
@@ -207,7 +207,7 @@ Expand S-code bit layout from 87 bits (V2) to full design-spec ~104 bits (V3):
 
 ---
 
-### Sprint 5 - History Tab
+### Sprint 5 - History Tab [COMPLETE]
 
 **Goal:** Full History tab per §10 Tab 4.
 
@@ -231,7 +231,7 @@ Expand S-code bit layout from 87 bits (V2) to full design-spec ~104 bits (V3):
 
 ---
 
-### Sprint 6 - Report Tab
+### Sprint 6 - Report Tab [COMPLETE]
 
 **Goal:** Full report generation per §10 Tab 5 + §5.6 RP rules.
 
@@ -556,13 +556,13 @@ UI component tests via React Testing Library for critical flows (Self-Check live
 
 ## Sprint Summary
 
-| Sprint | Tasks | Key Deliverable |
-|---|---|---|
-| 2 | 2.1, 2.2, 2.3 | Hardened engine + full S-code V3 + URL hydration |
-| 3 | 3.1, 3.2, 3.3 | Self-Check tab feature-complete |
-| 4 | 4.1, 4.2 | Projection engine + Project tab |
-| 5 | 5.1 | History tab with trend chart |
-| 6 | 6.1 | Report generation |
-| 7 | 7.1, 7.2, 7.3 | PWA + accessibility + chart update banner |
-| 8 | 8.1, 8.2, 8.3, 8.4 | Practice tools (stopwatch, HAMR metronome) + effort-weighted strategy engine + exercise comparison |
-| 9 | 9.1, 9.2 | Curated training resources + personalized training plans |
+| Sprint | Tasks | Status | Key Deliverable |
+|---|---|---|---|
+| 2 | 2.1, 2.2, 2.3 | ✅ Complete | Hardened engine + full S-code V3 + URL hydration |
+| 3 | 3.1, 3.2, 3.3 | ✅ Complete | Self-Check tab feature-complete |
+| 4 | 4.1, 4.2 | ✅ Complete | Projection engine + Project tab |
+| 5 | 5.1 | ✅ Complete | History tab with trend chart |
+| 6 | 6.1 | ✅ Complete | Report generation |
+| 7 | 7.1, 7.2, 7.3 | ❌ Pending | PWA + accessibility + chart update banner |
+| 8 | 8.1, 8.2, 8.3, 8.4 | ❌ Pending | Practice tools (stopwatch, HAMR metronome) + effort-weighted strategy engine + exercise comparison |
+| 9 | 9.1, 9.2 | ❌ Pending | Curated training resources + personalized training plans |

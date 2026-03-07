@@ -47,7 +47,7 @@ const EPOCH_MS = Date.UTC(2020, 0, 1)
 
 /** Convert an ISO date string (YYYY-MM-DD) to integer days since 2020-01-01 */
 function isoToDays(dateStr) {
-  return Math.round((new Date(dateStr + 'T00:00:00Z').getTime() - EPOCH_MS) / 86_400_000)
+  return Math.round((new Date(dateStr + 'T00:00:00Z').getTime() - EPOCH_MS) / 86400000)
 }
 
 /** Days between two ISO date strings (positive when b is later than a) */
