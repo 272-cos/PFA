@@ -26,6 +26,7 @@ export default [
         URL: 'readonly',
         URLSearchParams: 'readonly',
         localStorage: 'readonly',
+        sessionStorage: 'readonly',
         alert: 'readonly',
         setTimeout: 'readonly',
         clearTimeout: 'readonly',

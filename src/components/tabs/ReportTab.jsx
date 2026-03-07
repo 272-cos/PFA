@@ -22,13 +22,11 @@ import {
   EXERCISES,
   COMPONENTS,
   COMPONENT_WEIGHTS,
+  CHART_VERSION,
   calculateAge,
   getAgeBracket,
 } from '../../utils/scoring/constants.js'
 import { generateProjection } from '../../utils/projection/projectionEngine.js'
-
-// RP-04: Scoring chart version constant
-const CHART_VERSION = 'Sep 2025 Provisional'
 
 const EXERCISE_LABELS = {
   [EXERCISES.RUN_2MILE]: '2-Mile Run',

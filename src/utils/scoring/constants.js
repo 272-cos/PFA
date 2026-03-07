@@ -111,6 +111,13 @@ export function getWalkTimeLimit(gender, ageBracket) {
 export const DIAGNOSTIC_PERIOD_START = '2026-03-01'
 export const DIAGNOSTIC_PERIOD_END = '2026-06-30'
 
+// Scoring chart version (EC-24, GR-15)
+// To update: bump CHART_VERSION + CHART_RELEASE_DATE, add new table module to
+// scoringTables.js. All existing S-codes re-score automatically because they
+// store raw values (reps/times/measurements), not cached point totals.
+export const CHART_VERSION = 'Sep 2025 Provisional'
+export const CHART_RELEASE_DATE = '2025-09-01'
+
 /**
  * Calculate age from DOB and date
  * @param {Date} dob - Date of birth

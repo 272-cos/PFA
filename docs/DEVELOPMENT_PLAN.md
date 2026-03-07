@@ -291,10 +291,10 @@ Expand S-code bit layout from 87 bits (V2) to full design-spec ~104 bits (V3):
 
 **Design references:** EC-24, Risk Register (chart revision HIGH prob)
 
-- [ ] `CHART_VERSION` constant + `CHART_RELEASE_DATE` in `constants.js`
-- [ ] Banner component: "Using Sep 2025 provisional charts. Check afpc.af.mil for updates."
-- [ ] Banner dismissible per session (sessionStorage flag)
-- [ ] When new chart data ships: bump `CHART_VERSION`, add new table module, existing S-codes re-score automatically (GR-15)
+- [x] `CHART_VERSION` constant + `CHART_RELEASE_DATE` in `constants.js`; `ReportTab.jsx` imports from there (no duplicate)
+- [x] Banner component `ChartUpdateBanner.jsx`: "Using Sep 2025 Provisional scoring tables. Check afpc.af.mil for updates." with link
+- [x] Banner dismissible per session: sessionStorage key includes chart version (`pfa_chart_banner_dismissed_${CHART_VERSION}`) so bumping version shows banner again in the new session
+- [x] When new chart data ships: bump `CHART_VERSION` + `CHART_RELEASE_DATE` in `constants.js`, add new table module to `scoringTables.js`; existing S-codes re-score automatically because they store raw values (GR-15) - documented in constants.js comment
 
 ---
 
@@ -563,6 +563,6 @@ UI component tests via React Testing Library for critical flows (Self-Check live
 | 4 | 4.1, 4.2 | ✅ Complete | Projection engine + Project tab |
 | 5 | 5.1 | ✅ Complete | History tab with trend chart |
 | 6 | 6.1 | ✅ Complete | Report generation |
-| 7 | 7.1, 7.2, 7.3 | 🔄 In Progress | PWA + accessibility + chart update banner |
+| 7 | 7.1, 7.2, 7.3 | ✅ Complete | PWA + accessibility + chart update banner |
 | 8 | 8.1, 8.2, 8.3, 8.4 | ❌ Pending | Practice tools (stopwatch, HAMR metronome) + effort-weighted strategy engine + exercise comparison |
 | 9 | 9.1, 9.2 | ❌ Pending | Curated training resources + personalized training plans |
