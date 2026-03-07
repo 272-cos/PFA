@@ -11,7 +11,7 @@ export default function Header() {
       <div className="container mx-auto px-4 py-2 sm:py-4 max-w-4xl">
         <div className="flex items-center justify-between">
           <img
-            src={`${BASE}icons/logo.jpg`}
+            src={`${BASE}icons/logo-header.png`}
             alt="Trajectory"
             className="h-10 sm:h-14 w-auto"
           />
