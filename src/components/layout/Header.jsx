@@ -10,8 +10,9 @@ export default function Header() {
       className="w-full"
       style={{
         backgroundImage: `url(${BASE}Traj_BG.png)`,
-        backgroundSize: '100% auto',
-        backgroundPosition: 'center 30%',
+        backgroundSize: 'auto 100%',
+        backgroundRepeat: 'no-repeat',
+        backgroundPosition: 'center center',
       }}
     >
       <div className="container mx-auto max-w-4xl px-4 py-6 flex flex-col items-center" style={{ backdropFilter: 'brightness(0.85)' }}>
