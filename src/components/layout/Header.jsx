@@ -11,10 +11,10 @@ export default function Header() {
       style={{
         backgroundImage: `url(${BASE}Traj_BG.png)`,
         backgroundSize: 'cover',
-        backgroundPosition: 'center 50%',
+        backgroundPosition: 'center 30%',
       }}
     >
-      <div className="container mx-auto max-w-4xl px-4 py-3 flex flex-col items-center" style={{ backdropFilter: 'brightness(0.85)' }}>
+      <div className="container mx-auto max-w-4xl px-4 py-6 flex flex-col items-center" style={{ backdropFilter: 'brightness(0.85)' }}>
         <h1 className="text-2xl font-bold tracking-widest text-white drop-shadow-lg uppercase">
           Trajectory
         </h1>
