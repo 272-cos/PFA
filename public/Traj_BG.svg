@@ -70,68 +70,53 @@
   </g>
 
   <!--
-    Wave design: both waves cross WITHIN the banner crop zone (SVG y~305-650 at mobile
-    with background-position center 45%).
+    Wave design: two sweeping lines that cross to the RIGHT of the text (SVG x~900),
+    giving the text clear space on the left and a clean X composition on the right.
 
-    Wave A: enters upper-left y=390, arches to visible peak ~(275,337), descends through
-            crossing ~(585,485), then sweeps low to y=660 at right edge.
-    Wave B: enters lower-left y=620, dips briefly below visible (trough ~y=668), rises
-            through crossing ~(585,485), then rises steeply to y=200 at right - the steep
-            diagonal visible on the right side of the banner.
+    Visible banner crop: SVG y~410-525 at desktop 1200px; y~305-650 at mobile.
+
+    Wave A: enters upper-left (y=400), arches with peak ~(440,326) visible at mobile,
+            descends through crossing ~(900,485), sweeps gently low to y=630 at right.
+    Wave B: enters lower-left (y=610), dips below the crop, rises through crossing
+            ~(900,490), then curves smoothly upward to y=300 at right edge.
     Waves A2/B2: offset secondary lines for visual depth.
+    No sparkle nodes on the wave paths - clean lines only.
   -->
 
   <!-- Outer dim halo -->
   <g opacity="0.18">
-    <path d="M 0 390 C 180 310 360 300 580 480 C 780 660 1100 690 1536 660"
+    <path d="M 0 400 C 300 295 580 280 900 480 C 1100 610 1300 640 1536 630"
           stroke="#1060c0" stroke-width="22" fill="none"/>
-    <path d="M 0 620 C 200 700 400 710 580 490 C 650 270 800 240 1536 200"
+    <path d="M 0 610 C 300 720 580 720 900 490 C 1100 310 1300 295 1536 300"
           stroke="#1060c0" stroke-width="22" fill="none"/>
   </g>
 
   <!-- Mid glow layer -->
   <g filter="url(#glow)" opacity="0.55">
-    <!-- Wave A: arches to visible peak then sweeps low to right -->
-    <path d="M 0 390 C 180 310 360 300 580 480 C 780 660 1100 690 1536 660"
+    <!-- Wave A: sweeping arch from upper-left, crosses and descends to lower-right -->
+    <path d="M 0 400 C 300 295 580 280 900 480 C 1100 610 1300 640 1536 630"
           stroke="#2090ff" stroke-width="4" fill="none"/>
-    <!-- Wave B: dips low on left, rises steeply through crossing, steep ascent right -->
-    <path d="M 0 620 C 200 700 400 710 580 490 C 650 270 800 240 1536 200"
+    <!-- Wave B: rises from lower-left, crosses and curves up to upper-right -->
+    <path d="M 0 610 C 300 720 580 720 900 490 C 1100 310 1300 295 1536 300"
           stroke="#2090ff" stroke-width="4" fill="none"/>
-    <!-- Wave A2: secondary depth line, same arch-then-dive -->
-    <path d="M 0 408 C 180 338 360 328 580 498 C 780 668 1100 698 1536 672"
+    <!-- Wave A2: secondary depth line -->
+    <path d="M 0 415 C 300 312 580 298 900 494 C 1100 622 1300 652 1536 642"
           stroke="#40b0ff" stroke-width="2" fill="none"/>
-    <!-- Wave B2: secondary depth line, same low-dip-then-steep-rise -->
-    <path d="M 0 602 C 200 682 400 692 580 508 C 650 290 800 260 1536 218"
+    <!-- Wave B2: secondary depth line -->
+    <path d="M 0 595 C 300 705 580 705 900 505 C 1100 326 1300 311 1536 316"
           stroke="#40b0ff" stroke-width="2" fill="none"/>
   </g>
 
   <!-- Crisp bright wave lines on top -->
   <g>
-    <path d="M 0 390 C 180 310 360 300 580 480 C 780 660 1100 690 1536 660"
+    <path d="M 0 400 C 300 295 580 280 900 480 C 1100 610 1300 640 1536 630"
           stroke="#60c8ff" stroke-width="1.5" fill="none" opacity="0.9"/>
-    <path d="M 0 620 C 200 700 400 710 580 490 C 650 270 800 240 1536 200"
+    <path d="M 0 610 C 300 720 580 720 900 490 C 1100 310 1300 295 1536 300"
           stroke="#60c8ff" stroke-width="1.5" fill="none" opacity="0.9"/>
-    <path d="M 0 408 C 180 338 360 328 580 498 C 780 668 1100 698 1536 672"
+    <path d="M 0 415 C 300 312 580 298 900 494 C 1100 622 1300 652 1536 642"
           stroke="#90d8ff" stroke-width="1" fill="none" opacity="0.7"/>
-    <path d="M 0 602 C 200 682 400 692 580 508 C 650 290 800 260 1536 218"
+    <path d="M 0 595 C 300 705 580 705 900 505 C 1100 326 1300 311 1536 316"
           stroke="#90d8ff" stroke-width="1" fill="none" opacity="0.7"/>
-  </g>
-
-  <!-- Sparkle nodes at wave peak, crossing, and steep-rise inflection -->
-  <!-- Wave A arch peak at approx (275, 337) - visible in banner -->
-  <g filter="url(#sparkle)">
-    <circle cx="275" cy="337" r="5" fill="#80ccff" opacity="0.85"/>
-    <circle cx="275" cy="337" r="2" fill="#ffffff" opacity="0.9"/>
-  </g>
-  <!-- Crossing of waves A and B near (585, 485) -->
-  <g filter="url(#sparkle)">
-    <circle cx="585" cy="485" r="6" fill="#ffffff" opacity="0.90"/>
-    <circle cx="585" cy="485" r="2.5" fill="#e0f4ff" opacity="1"/>
-  </g>
-  <!-- Wave B steep-rise inflection approx (800, 240) - glow bleeds into top of banner -->
-  <g filter="url(#sparkle)">
-    <circle cx="800" cy="240" r="5" fill="#80ccff" opacity="0.85"/>
-    <circle cx="800" cy="240" r="2" fill="#ffffff" opacity="0.9"/>
   </g>
 
   <!-- Scattered star dots -->
