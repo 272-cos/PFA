@@ -422,13 +422,13 @@ Each scoring table defines a curve: performance input (reps, time, shuttles) map
 
 **Rationale:** Multiple sources exist (HPRC, DVIDS official videos, Total Force Hub workout plans) but Airmen don't know where to find them. Centralizing verified links per component/exercise adds value without creating content or violating the no-backend constraint.
 
-- [ ] Resource registry: `src/utils/training/resources.js` - static array of verified links
-- [ ] Categories: per-component (cardio, strength, core, body comp) and per-exercise
-- [ ] Include: DVIDS HAMR instruction video, HPRC training series, official HAMR audio (SoundCloud)
-- [ ] Display: collapsible "Training Resources" section per component in Self-Check results
-- [ ] Link validation: each entry has title, URL, source (official/vetted), and last-verified date
-- [ ] No embedded content - external links only (no iframe, no video embed)
-- [ ] Periodic review: documented process for verifying links still work
+- [x] Resource registry: `src/utils/training/resources.js` - static array of verified links
+- [x] Categories: per-component (cardio, strength, core, body comp) and per-exercise
+- [x] Include: DVIDS HAMR instruction video, HPRC training series, official HAMR audio (SoundCloud)
+- [x] Display: collapsible "Training Resources" section per component in Self-Check results
+- [x] Link validation: each entry has title, URL, source (official/vetted), and last-verified date
+- [x] No embedded content - external links only (no iframe, no video embed)
+- [x] Periodic review: documented process for verifying links still work (see file header)
 
 **Acceptance:** Each component has at least 2 verified training resource links. Links open in new tab. Sources attributed.
 
@@ -565,4 +565,4 @@ UI component tests via React Testing Library for critical flows (Self-Check live
 | 6 | 6.1 | ✅ Complete | Report generation |
 | 7 | 7.1, 7.2, 7.3 | ✅ Complete | PWA + accessibility + chart update banner |
 | 8 | 8.1, 8.2, 8.3, 8.4 | 🔄 In Progress | 8.1 complete (effort-weighted strategy engine); 8.2 complete (stopwatch); 8.3 complete (HAMR metronome); 8.4 pending (exercise comparison) |
-| 9 | 9.1, 9.2 | ❌ Pending | Curated training resources + personalized training plans |
+| 9 | 9.1, 9.2 | 🔄 In Progress | 9.1 complete (curated training resource links); 9.2 pending (personalized training plans) |
