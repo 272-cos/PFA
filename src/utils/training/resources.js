@@ -126,6 +126,13 @@ const RESOURCES = {
   // ---------------------------------------------------------------------------
   [COMPONENTS.STRENGTH]: [
     {
+      title: 'USAF PFA Instruction Video - Strength and Core (DVIDS - official video)',
+      url: 'https://www.dvidshub.net/video/909597/usaf-pfa-instruction-video',
+      source: 'official',
+      description: 'Official DoD video covering USAF PFA strength and core endurance event technique, standards, and common grading errors.',
+      lastVerified: '2026-03-11',
+    },
+    {
       title: 'Air Force Physical Fitness Assessment Training Series (HPRC)',
       url: 'https://www.hprc-online.org/physical-fitness/training-performance/physical-fitness-training-series-air-force-physical-fitness',
       source: 'official',
@@ -187,6 +194,13 @@ const RESOURCES = {
       lastVerified: '2026-03-11',
     },
     {
+      title: 'USAF PFA Instruction Video - Strength and Core (DVIDS - official video)',
+      url: 'https://www.dvidshub.net/video/909597/usaf-pfa-instruction-video',
+      source: 'official',
+      description: 'Official DoD PFA instruction video covering HRPU standards, grading criteria, and technique cues.',
+      lastVerified: '2026-03-11',
+    },
+    {
       title: '5 Most Effective Push-Up and Pull-Up Workouts (Military.com)',
       url: 'https://www.military.com/military-fitness/5-most-effective-push-and-pull-workouts',
       source: 'vetted',
@@ -230,9 +244,43 @@ const RESOURCES = {
   ],
 
   // ---------------------------------------------------------------------------
+  // CORE - cross-leg reverse crunch (CLRC) specific
+  // ---------------------------------------------------------------------------
+  [EXERCISES.CLRC]: [
+    {
+      title: 'Crush Those Crunches - CLRC and Plank Demo (DVIDS - official video)',
+      url: 'https://www.dvidshub.net/video/832907/crush-those-crunches',
+      source: 'official',
+      description: 'Official DVIDS video demonstrating cross-leg reverse crunch technique and forearm plank form for the 2-minute USAF PFA core event.',
+      lastVerified: '2026-03-11',
+    },
+    {
+      title: 'Military Workout: Core Strength 101 (HPRC)',
+      url: 'https://www.hprc-online.org/physical-fitness/training-performance/military-workout-core-strength-101',
+      source: 'official',
+      description: 'HPRC core training guide covering stability and endurance exercises that build the hip flexor and abdominal strength needed for CLRC.',
+      lastVerified: '2026-03-11',
+    },
+    {
+      title: 'Train Smarter: Improve Sit-Up Performance with Core Exercises (HPRC)',
+      url: 'https://www.hprc-online.org/physical-fitness/training-performance/train-smarter-improve-your-sit-performance-core-exercises',
+      source: 'official',
+      description: 'Evidence-based guidance on core training progressions applicable to CLRC volume and endurance development.',
+      lastVerified: '2026-03-11',
+    },
+  ],
+
+  // ---------------------------------------------------------------------------
   // CORE - forearm plank specific
   // ---------------------------------------------------------------------------
   [EXERCISES.PLANK]: [
+    {
+      title: 'Crush Those Crunches - CLRC and Plank Demo (DVIDS - official video)',
+      url: 'https://www.dvidshub.net/video/832907/crush-those-crunches',
+      source: 'official',
+      description: 'Official DVIDS video demonstrating forearm plank form and cross-leg reverse crunch technique for the USAF PFA core event.',
+      lastVerified: '2026-03-11',
+    },
     {
       title: 'Military Workout: Core Strength 101 (HPRC)',
       url: 'https://www.hprc-online.org/physical-fitness/training-performance/military-workout-core-strength-101',
