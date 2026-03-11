@@ -364,14 +364,14 @@ Each scoring table defines a curve: performance input (reps, time, shuttles) map
 
 **Rationale:** Every Airman currently uses a separate phone clock app to time their 2-mile run practice. No existing AF fitness app includes a built-in timer. Integrating one keeps users in-app and enables direct score lookup from timed results.
 
-- [ ] New tab or modal: "Practice Tools"
-- [ ] Stopwatch: start/stop/reset with lap/split support
-- [ ] Lap display: lap number, lap time, cumulative time
-- [ ] Auto-score integration: "Your 2-mile time of 16:42 = X pts for your bracket"
-- [ ] Persist last timed result in sessionStorage (offer to use in Self-Check)
-- [ ] Large, touch-friendly controls (44px+ targets per GR-09)
-- [ ] Works offline (no external dependencies)
-- [ ] Screen wake lock (`navigator.wakeLock`) to prevent screen timeout during timing
+- [X] New tab or modal: "Practice Tools"
+- [X] Stopwatch: start/stop/reset with lap/split support
+- [X] Lap display: lap number, lap time, cumulative time
+- [X] Auto-score integration: "Your 2-mile time of 16:42 = X pts for your bracket"
+- [X] Persist last timed result in sessionStorage (offer to use in Self-Check)
+- [X] Large, touch-friendly controls (44px+ targets per GR-09)
+- [X] Works offline (no external dependencies)
+- [X] Screen wake lock (`navigator.wakeLock`) to prevent screen timeout during timing
 
 **Acceptance:** Timer accurate to 0.1s. Lap splits display correctly. Score lookup works for user's bracket. Wake lock prevents screen sleep.
 
@@ -402,11 +402,11 @@ Each scoring table defines a curve: performance input (reps, time, shuttles) map
 
 **Rationale:** With multiple exercise options per component (run vs HAMR, push-ups vs HRPU, sit-ups vs CLRC vs plank), Airmen need to see how their performance translates across alternatives. No existing tool shows side-by-side "if you did X reps of push-ups, you'd need Y reps of HRPU for the same score."
 
-- [ ] Side-by-side comparison: "With push-ups you'd score X, with HRPU you'd score Y"
-- [ ] Per-component: show all exercise options and equivalent scores
-- [ ] Accessible from Self-Check tab results
-- [ ] Uses existing scoring engine - no new scoring logic
-- [ ] Visual: bar chart or simple table comparing points per exercise option
+- [X] Side-by-side comparison: "With push-ups you'd score X, with HRPU you'd score Y"
+- [X] Per-component: show all exercise options and equivalent scores
+- [X] Accessible from Self-Check tab results
+- [X] Uses existing scoring engine - no new scoring logic
+- [X] Visual: bar chart or simple table comparing points per exercise option
 
 **Acceptance:** Comparison accurately reflects scoring tables for all exercise options within each component.
 
