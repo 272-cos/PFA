@@ -11,6 +11,7 @@ import { calculateComponentScore, calculateCompositeScore, calculateWHtR, parseT
 import { EXERCISE_NAMES } from '../../utils/scoring/strategyEngine.js'
 import ExerciseComparison from './ExerciseComparison.jsx'
 import { getExercisePrefs, saveExercisePrefs, saveDraft, loadDraft, clearDraft } from '../../utils/storage/localStorage.js'
+import { getTrainingResources } from '../../utils/training/resources.js'
 
 /**
  * Auto-format time input: inserts colon as user types digits.
@@ -750,6 +751,7 @@ export default function SelfCheckTab() {
               assessmentDate={assessmentDate}
             />
           )}
+          <TrainingResources component={COMPONENTS.CARDIO} exercise={cardioExempt ? null : cardioExercise} />
         </ComponentSection>
 
         {/* Strength Component */}
@@ -791,6 +793,7 @@ export default function SelfCheckTab() {
               <p className="text-xs text-amber-600 mt-1">Unusually high count - double check your entry</p>
             )}
           </div>
+          <TrainingResources component={COMPONENTS.STRENGTH} exercise={strengthExempt ? null : strengthExercise} />
         </ComponentSection>
 
         {/* Core Component */}
@@ -847,6 +850,7 @@ export default function SelfCheckTab() {
               </p>
             )}
           </div>
+          <TrainingResources component={COMPONENTS.CORE} exercise={coreExempt ? null : coreExercise} />
         </ComponentSection>
 
         {/* Body Composition */}
@@ -901,6 +905,7 @@ export default function SelfCheckTab() {
               WHtR: {calculateWHtR(parseFloat(waistInches), parseFloat(heightInches))?.toFixed(2)}
             </p>
           )}
+          <TrainingResources component={COMPONENTS.BODY_COMP} />
         </ComponentSection>
 
         {/* IV-10: All-exempt warning */}
@@ -1256,6 +1261,67 @@ function ComponentSection({ title, exempt, onExemptChange, score, children, hide
         </div>
       </div>
       {children}
+    </div>
+  )
+}
+
+// Collapsible training resources section shown per component in Self-Check results
+function TrainingResources({ component, exercise }) {
+  const [open, setOpen] = useState(false)
+  const resources = getTrainingResources(component, exercise)
+
+  if (!resources || resources.length === 0) return null
+
+  return (
+    <div className="mt-3 border border-gray-200 rounded-lg overflow-hidden">
+      <button
+        type="button"
+        onClick={() => setOpen(o => !o)}
+        aria-expanded={open}
+        className="w-full flex items-center justify-between px-4 py-2.5 bg-gray-50 hover:bg-gray-100 transition-colors text-sm font-medium text-gray-700 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-blue-500"
+      >
+        <span className="flex items-center gap-2">
+          <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 text-blue-600" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+            <path d="M9 4.804A7.968 7.968 0 005.5 4c-1.255 0-2.443.29-3.5.804v10A7.969 7.969 0 015.5 14c1.669 0 3.218.51 4.5 1.385A7.962 7.962 0 0114.5 14c1.255 0 2.443.29 3.5.804v-10A7.968 7.968 0 0014.5 4c-1.255 0-2.443.29-3.5.804V12a1 1 0 11-2 0V4.804z" />
+          </svg>
+          Training Resources
+        </span>
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          className={`w-4 h-4 text-gray-500 transition-transform ${open ? 'rotate-180' : ''}`}
+          viewBox="0 0 20 20"
+          fill="currentColor"
+          aria-hidden="true"
+        >
+          <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
+        </svg>
+      </button>
+
+      {open && (
+        <ul className="divide-y divide-gray-100 bg-white" role="list">
+          {resources.map((r, i) => (
+            <li key={i} className="px-4 py-3">
+              <a
+                href={r.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-sm font-medium text-blue-700 hover:text-blue-900 hover:underline focus:outline-none focus:ring-2 focus:ring-blue-500 rounded"
+              >
+                {r.title}
+              </a>
+              <p className="text-xs text-gray-500 mt-0.5">{r.description}</p>
+              <p className="text-xs text-gray-400 mt-0.5">
+                <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium mr-1 ${
+                  r.source === 'official' ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-600'
+                }`}>
+                  {r.source === 'official' ? 'Official' : 'Vetted'}
+                </span>
+                Verified {r.lastVerified}
+              </p>
+            </li>
+          ))}
+        </ul>
+      )}
     </div>
   )
 }
