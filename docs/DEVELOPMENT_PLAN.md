@@ -438,13 +438,13 @@ Each scoring table defines a curve: performance input (reps, time, shuttles) map
 
 **Rationale:** The existing recommendation engine provides tiered tips (FAILING/MARGINAL/STRONG). Extending it with specific weekly training plans based on the user's weakest component and their gap to passing would match the Army's Guard Fit app feature set - which is frequently cited as a benchmark.
 
-- [ ] Extend `recommendationEngine.js` with weekly plan generator
-- [ ] Input: current component scores, target date, bracket
-- [ ] Output: prioritized weekly plan (e.g., "3x interval runs, 2x HAMR practice, 1x long run")
-- [ ] Plans scaled to gap size: larger deficit = more aggressive plan
-- [ ] Time-aware: plans adjust based on weeks until target PFA date
-- [ ] Display in Project tab alongside projection data
-- [ ] Evidence basis: source from `docs/RESEARCH-FITNESS-PROGRAMS.md`
+- [x] Extend `recommendationEngine.js` with weekly plan generator
+- [x] Input: current component scores, target date, bracket
+- [x] Output: prioritized weekly plan (e.g., "3x interval runs, 2x HAMR practice, 1x long run")
+- [x] Plans scaled to gap size: larger deficit = more aggressive plan
+- [x] Time-aware: plans adjust based on weeks until target PFA date
+- [x] Display in Project tab alongside projection data
+- [x] Evidence basis: source from `docs/RESEARCH-FITNESS-PROGRAMS.md`
 
 **Acceptance:** Training suggestions are specific to user's weakest component. Plans adjust based on time to target date.
 
@@ -565,4 +565,4 @@ UI component tests via React Testing Library for critical flows (Self-Check live
 | 6 | 6.1 | ✅ Complete | Report generation |
 | 7 | 7.1, 7.2, 7.3 | ✅ Complete | PWA + accessibility + chart update banner |
 | 8 | 8.1, 8.2, 8.3, 8.4 | 🔄 In Progress | 8.1 complete (effort-weighted strategy engine); 8.2 complete (stopwatch); 8.3 complete (HAMR metronome); 8.4 pending (exercise comparison) |
-| 9 | 9.1, 9.2 | 🔄 In Progress | 9.1 complete (curated training resource links); 9.2 pending (personalized training plans) |
+| 9 | 9.1, 9.2 | ✅ Complete | 9.1 complete (curated training resource links); 9.2 complete (personalized training plans) |

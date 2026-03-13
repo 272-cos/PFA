@@ -3,7 +3,7 @@
  * Provides tiered training suggestions based on component scores
  */
 
-import { COMPONENTS, EXERCISES } from '../scoring/constants.js'
+import { COMPONENTS, EXERCISES, COMPONENT_MINIMUMS } from '../scoring/constants.js'
 
 // Recommendation tiers based on component percentage
 const TIERS = {
@@ -271,4 +271,328 @@ export function getTierEmoji(percentage) {
   if (percentage < 75) return '💪'
   if (percentage <= 80) return '⚡'
   return '🚀'
+}
+
+// ─── Weekly Training Plan Generator ────────────────────────────────────────────
+
+/**
+ * Urgency tiers for weekly plan - based on weeks remaining to target PFA date.
+ * Urgent (<4 weeks): test-simulation focus, peak intensity.
+ * Standard (4-12 weeks): progressive training, balanced volume.
+ * Long-term (>12 weeks): aerobic/strength base building.
+ */
+const URGENCY = {
+  URGENT: 'urgent',
+  STANDARD: 'standard',
+  LONG_TERM: 'long_term',
+}
+
+export const URGENCY_LABELS = {
+  [URGENCY.URGENT]: 'Final Push',      // < 4 weeks
+  [URGENCY.STANDARD]: 'Build Phase',   // 4-12 weeks
+  [URGENCY.LONG_TERM]: 'Foundation',   // > 12 weeks
+}
+
+/**
+ * Time-aware, gap-scaled weekly workout sessions per component/exercise/urgency.
+ * Source: docs/RESEARCH-FITNESS-PROGRAMS.md
+ * Each urgency tier has 3 session descriptions matching the tier's training goal.
+ */
+const WEEKLY_WORKOUTS = {
+  [COMPONENTS.CARDIO]: {
+    [EXERCISES.RUN_2MILE]: {
+      [URGENCY.URGENT]: [
+        'Race Simulation: Full 2-mile at goal pace, record split at mile 1',
+        'Interval Sprint: 6x400m at 5-10 sec faster than goal pace (2 min rest)',
+        'Tempo Run: 20 min at 80% max HR - maintain uncomfortable-but-sustainable pace',
+        'Short Fartlek: 20 min alternating 2 min fast / 1 min easy',
+        'Active Recovery: 20-30 min easy jog or brisk walk to flush legs',
+      ],
+      [URGENCY.STANDARD]: [
+        'Interval Day: 6x400m at faster than target pace (90 sec rest between)',
+        'Tempo Run: 15-20 min at 80% max heart rate, 10 min warm-up/cool-down',
+        'Long Slow Distance: 4-mile run at conversational pace (build aerobic base)',
+        'Hill Sprints: 8x30 sec hill sprint with walk-down recovery (no impact overload)',
+      ],
+      [URGENCY.LONG_TERM]: [
+        'Easy Base Run: 3-4 miles at fully conversational pace (talk-test breathing)',
+        'Walk-Run Intervals: 2 min run / 1 min walk x10, reduce walk time each week',
+        'Aerobic Build: 30 min continuous easy run - focus on consistent breathing',
+      ],
+    },
+    [EXERCISES.HAMR]: {
+      [URGENCY.URGENT]: [
+        'HAMR Simulation: Full test run with official beep timing, record level reached',
+        'Sprint Intervals: 20m x15 with 20 sec rest - match test pace',
+        'Tabata HAMR: 20 sec max shuttle effort / 10 sec rest x8 rounds',
+        'Turn Drills: 10m sprints focusing on foot plant and push-off technique x15',
+        'Active Recovery: Lateral shuffles at easy pace 10 min + stretching',
+      ],
+      [URGENCY.STANDARD]: [
+        'Sprint Intervals: 20m sprints x10 with 30-sec rest - build speed',
+        'Agility Circuit: Cone drills + lateral shuffles for 20 min continuous',
+        'Tabata HAMR: 20 sec max effort / 10 sec rest x8 rounds',
+        'Plyometrics: Jump squats + burpees 3x10 (builds shuttle power)',
+      ],
+      [URGENCY.LONG_TERM]: [
+        'Shuttle Basics: 5-10m cone drills focusing on low center of gravity on turns',
+        'Lateral Movement Foundation: Side-to-side shuffles 30 sec x6 sets with 30 sec rest',
+        'Deceleration Drills: Sprint 20m, plant foot, sprint back - 8 reps (stop technique)',
+      ],
+    },
+    [EXERCISES.WALK_2KM]: {
+      [URGENCY.URGENT]: [
+        'Full 2km Timed Walk: Complete course at race pace, record finish time',
+        'Pace Intervals: 800m at goal pace x3 with 2 min rest',
+        'Technique Walk: 30 min brisk walk - arms at 90 degrees, drive elbows back',
+      ],
+      [URGENCY.STANDARD]: [
+        'Interval Walking: 3 min brisk / 1 min easy x8, progressively reduce easy time',
+        'Course Familiarity: Walk test course at target pace, note landmarks at halfway',
+        'Speed Walk Drill: 20 min focusing on stride length (longer, not faster turnover)',
+      ],
+      [URGENCY.LONG_TERM]: [
+        'Pace Practice: Walk 30 min at target speed (4.5+ mph / 13:20/mile)',
+        'Hill Training: 30 min brisk walk on hilly terrain to build leg power',
+        'Interval Base: 3 min brisk / 2 min easy x6, reduce easy intervals each week',
+      ],
+    },
+  },
+
+  [COMPONENTS.STRENGTH]: {
+    [EXERCISES.PUSHUPS]: {
+      [URGENCY.URGENT]: [
+        'Max Rep Sets: 5 sets to near-failure with 2 min rest (test simulation conditions)',
+        'Pyramid: 1-2-3-4-5-4-3-2-1 reps with 10 sec rest (repeat x2 for volume)',
+        'Test Simulation: 1-min max effort push-ups under test conditions, record count',
+      ],
+      [URGENCY.STANDARD]: [
+        'Volume Day: Accumulate 200 total push-ups in session (sets/rest as needed)',
+        'Pyramid Sets: 1-2-3-4-5-4-3-2-1 reps with 10 sec rest between each set',
+        'Tempo Push-ups: 3-1-3 rhythm (3 sec down, 1 sec hold, 3 sec up) x3 sets of 10',
+      ],
+      [URGENCY.LONG_TERM]: [
+        'Foundation: 3x15 incline push-ups (hands on stairs/bench) - build base strength',
+        'Strength Builder: 5x10 standard push-ups with 2 min rest - focus on full range',
+        'Negative Reps: 3x8 slow 5-sec lowering phase from plank to floor',
+      ],
+    },
+    [EXERCISES.HRPU]: {
+      [URGENCY.URGENT]: [
+        'Test Simulation: Full 2-min HRPU under test conditions, record count',
+        'EMOM: 15 HRPUs every minute for 10 rounds (150 total reps)',
+        'Max Effort Sets: 3 sets to near-failure with 3 min rest',
+      ],
+      [URGENCY.STANDARD]: [
+        'Timed Sets: 30 sec max effort / 30 sec rest x6 rounds - build muscular endurance',
+        'EMOM: 15 HRPUs every minute for 8 rounds (form focus - complete hand lift each rep)',
+        'Form Drill: 3x12 slow HRPUs with deliberate full hand lift and chest contact',
+      ],
+      [URGENCY.LONG_TERM]: [
+        'Dead Stop Foundation: 3x10 with full hand lift and 2 sec pause on ground',
+        'Volume Base: 3x15 standard push-ups to build pressing strength before HRPU',
+        'Phase Training: 3x8 lowering phase only (eccentric), then 3x8 pressing only (concentric)',
+      ],
+    },
+  },
+
+  [COMPONENTS.CORE]: {
+    [EXERCISES.SITUPS]: {
+      [URGENCY.URGENT]: [
+        'Test Simulation: Full 1-min max sit-ups under test conditions, record count',
+        'Sprint Rounds: 30 sec max effort / 30 sec rest x6 sets - test-pace conditioning',
+        'Cadence Drill: Metronome at 55 bpm for 3 sets of 30 reps - race rhythm training',
+      ],
+      [URGENCY.STANDARD]: [
+        '100 Sit-up Session: Complete 100 total in as few sets as possible',
+        'Cadence Training: Metronome at 55 bpm for 3 sets of 30 reps - build pace tolerance',
+        'Pyramid: 10-20-30-20-10 sit-ups with 30 sec rest - high volume with limited rest',
+      ],
+      [URGENCY.LONG_TERM]: [
+        'Core Foundation: 3x20 crunches with controlled curl - no neck pulling',
+        'Dead Bug Drill: 3x10 alternating arm/leg extensions with lower back flat',
+        'Volume Build: 5x15 sit-ups with 90 sec rest - emphasize full range of motion',
+      ],
+    },
+    [EXERCISES.CLRC]: {
+      [URGENCY.URGENT]: [
+        'Test Simulation: Full 2-min CLRC under test conditions, record count',
+        'Timed Intervals: 45 sec max effort / 15 sec rest x8 rounds - threshold conditioning',
+        'Max Sets: 3 sets to near-failure with 2 min rest - build top-end capacity',
+      ],
+      [URGENCY.STANDARD]: [
+        'High Rep Sets: 35 reps x3 with 1 min rest - build specific endurance',
+        'Timed Intervals: 45 sec work / 15 sec rest x6 rounds - pacing practice',
+        'Slow Tempo: 3x20 at 2-1-2 rhythm (2 sec up, 1 hold, 2 sec down) - form control',
+      ],
+      [URGENCY.LONG_TERM]: [
+        'Movement Pattern: 3x10 reverse crunches (knees to chest, lift hips off ground)',
+        'Position Practice: 3x15 with deliberate cross-leg setup - master form before speed',
+        'Hip Flexor Foundation: 3x10 lying leg raises to 90 degrees (isolate lower abs)',
+      ],
+    },
+    [EXERCISES.PLANK]: {
+      [URGENCY.URGENT]: [
+        'Extended Hold: 2+ min continuous hold x2 sets with 3 min rest',
+        'Pyramid: 60-90-120 sec holds with 30 sec rest (builds target duration)',
+        'Test Prep: Hold until failure, rest 3 min, repeat x2 - simulate test conditions',
+      ],
+      [URGENCY.STANDARD]: [
+        '2-Min Goal: Build to 2+ min continuous hold - add 10 sec per session',
+        'Pyramid Training: 30-60-90-60-30 sec holds with 20 sec rest between',
+        'Interval Plank: 45 sec on / 15 sec rest x8 rounds - high total time-under-tension',
+      ],
+      [URGENCY.LONG_TERM]: [
+        'Short Holds: 30 sec x6 with 30 sec rest - add 5 sec per week per set',
+        'Form Foundation: 3x20 sec holds - straight line head to heels, neutral spine',
+        'Progressive Build: 45 sec x4 this week, 50 sec x4 next week - systematic progression',
+      ],
+    },
+  },
+
+  [COMPONENTS.BODY_COMP]: {
+    [EXERCISES.WHTR]: {
+      [URGENCY.URGENT]: [
+        'Daily calorie deficit: 500-750 cal/day below maintenance - track with app',
+        'Hydration: 64+ oz water daily - reduces water retention before measurement',
+        'Limit sodium: Under 2,300 mg/day - cut processed foods and restaurant meals',
+      ],
+      [URGENCY.STANDARD]: [
+        'Meal prep: Cook 3-4 days of healthy meals at once for consistency',
+        'Calorie tracking: Log all food for 2 weeks to identify problem areas',
+        'Portion control: Use hand-size method (protein = palm, carbs = fist)',
+      ],
+      [URGENCY.LONG_TERM]: [
+        'Dietary journal: Track all food intake for 2 weeks to find patterns',
+        'One swap per day: Replace one processed food with a whole food alternative',
+        'Hydration habit: Replace sugary drinks with water - saves 200-400 cal/day',
+      ],
+    },
+  },
+}
+
+/**
+ * Calculate sessions per week for a component based on gap to minimum and urgency.
+ * Respects safety limits: strength/core max 3x/week, cardio max 5x/week.
+ * Body comp returns 0 (tracked as daily habits, not sessions).
+ * @param {string} component - Component type constant
+ * @param {number} gapBelowMin - Percentage points below minimum (0 if passing)
+ * @param {string} urgency - URGENCY constant
+ * @returns {number} Sessions per week
+ */
+function getSessionsPerWeek(component, gapBelowMin, urgency) {
+  if (component === COMPONENTS.BODY_COMP) return 0 // Body comp = daily habits
+
+  // Safety maximums from RESEARCH-FITNESS-PROGRAMS.md
+  const MAX = component === COMPONENTS.CARDIO ? 5 : 3
+
+  let base
+  if (urgency === URGENCY.URGENT) {
+    // Short timeline: higher frequency to maximize remaining weeks
+    if (gapBelowMin > 10) base = 4
+    else if (gapBelowMin > 3) base = 3
+    else base = 2
+  } else if (urgency === URGENCY.STANDARD) {
+    // Standard timeline: progressive loading
+    if (gapBelowMin > 15) base = 4
+    else if (gapBelowMin > 5) base = 3
+    else base = 2
+  } else {
+    // Long-term: base building phase - consistency over intensity
+    if (gapBelowMin > 15) base = 3
+    else if (gapBelowMin > 5) base = 3
+    else base = 2
+  }
+
+  return Math.min(base, MAX)
+}
+
+/**
+ * Generate a personalized weekly training plan based on current scores and time to target date.
+ * Plans are scaled to the user's gap to passing and adjusted for weeks remaining.
+ * Evidence basis: docs/RESEARCH-FITNESS-PROGRAMS.md
+ *
+ * @param {Object} componentData - Per-component data: { [compType]: { percentage, exercise, exempt } }
+ *   - percentage: current component percentage score (null if not yet tested)
+ *   - exercise: exercise type constant
+ *   - exempt: boolean
+ * @param {string} targetDate - ISO date string for target PFA date
+ * @returns {Object|null} Weekly plan or null if insufficient data
+ */
+export function generateWeeklyPlan(componentData, targetDate) {
+  if (!componentData || !targetDate) return null
+
+  const today = new Date().toISOString().split('T')[0]
+  const msPerWeek = 7 * 24 * 60 * 60 * 1000
+  const weeksToTarget = Math.max(
+    0,
+    Math.round((new Date(targetDate) - new Date(today)) / msPerWeek)
+  )
+
+  // Determine urgency tier
+  let urgency
+  if (weeksToTarget < 4) urgency = URGENCY.URGENT
+  else if (weeksToTarget <= 12) urgency = URGENCY.STANDARD
+  else urgency = URGENCY.LONG_TERM
+
+  // Build priority list from non-exempt, tested components
+  const priorities = []
+  for (const [comp, data] of Object.entries(componentData)) {
+    if (!data || data.exempt) continue
+    if (data.percentage === null || data.percentage === undefined) continue
+
+    const minPct = COMPONENT_MINIMUMS[comp] ?? 60
+    const gapBelowMin = Math.max(0, minPct - data.percentage)
+    const isFailing = data.percentage < minPct
+
+    priorities.push({
+      component: comp,
+      exercise: data.exercise,
+      percentage: data.percentage,
+      isFailing,
+      gapBelowMin,
+    })
+  }
+
+  if (priorities.length === 0) return null
+
+  // Sort: failing components first (by gap desc), then marginal (close to min), then passing
+  priorities.sort((a, b) => {
+    if (a.isFailing && !b.isFailing) return -1
+    if (!a.isFailing && b.isFailing) return 1
+    return b.gapBelowMin - a.gapBelowMin
+  })
+
+  // Build plan items with session counts and workout descriptions
+  const planItems = priorities.map((p, index) => {
+    const sessionsPerWeek = getSessionsPerWeek(p.component, p.gapBelowMin, urgency)
+    const allWorkouts = WEEKLY_WORKOUTS[p.component]?.[p.exercise]?.[urgency] ?? []
+
+    // Select workouts matching session count (up to what's available)
+    const selectedWorkouts = allWorkouts.slice(0, Math.max(sessionsPerWeek, 3))
+
+    const tier = p.percentage < 75 ? TIERS.FAILING
+      : p.percentage <= 80 ? TIERS.MARGINAL
+        : TIERS.STRONG
+
+    return {
+      component: p.component,
+      exercise: p.exercise,
+      percentage: p.percentage,
+      isFailing: p.isFailing,
+      gapBelowMin: p.gapBelowMin,
+      tier,
+      sessionsPerWeek,
+      workouts: selectedWorkouts,
+      priorityRank: index + 1,
+    }
+  })
+
+  return {
+    weeksToTarget,
+    urgency,
+    urgencyLabel: URGENCY_LABELS[urgency],
+    planItems,
+    restNote: 'Allow 1-2 complete rest days per week. Never train the same muscle group on consecutive days.',
+  }
 }
