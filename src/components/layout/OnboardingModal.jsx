@@ -33,7 +33,35 @@ const SLIDES = [
   {
     id: 'selfcheck',
     title: 'Step 2: Record a Self-Check',
-    body: 'Log results for any combination of components - run or HAMR, push-ups or hand-release, sit-ups or plank. Scores update live as you type. Partial entries still give you component-level feedback; the composite appears once all four are in.',
+    body: 'Log results for any combination of components - run or HAMR, push-ups or hand-release, sit-ups or plank. Scores update live as you type.',
+    content: (
+      <div className="my-3 text-left">
+        <p className="text-xs text-gray-500 font-semibold uppercase tracking-wide mb-2 text-center">Hidden gem: Training Resources</p>
+        <div className="border border-gray-200 rounded-lg overflow-hidden bg-white text-left">
+          <div className="px-3 py-2 flex items-center justify-between bg-gray-50 border-b border-gray-100">
+            <div>
+              <span className="text-xs font-semibold text-gray-800">Cardio</span>
+              <span className="ml-2 text-xs text-gray-500">14:30 2-mile run</span>
+            </div>
+            <span className="text-xs bg-green-100 text-green-700 px-1.5 py-0.5 rounded font-semibold">82 pts - PASS</span>
+          </div>
+          <div className="px-3 py-2 bg-blue-50">
+            <div className="flex items-center gap-1 text-blue-700">
+              <svg className="w-3 h-3 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+              </svg>
+              <span className="text-xs font-semibold">Training Resources</span>
+              <span className="ml-auto text-xs text-blue-500 italic">tap to expand</span>
+            </div>
+            <div className="mt-1.5 pl-4 space-y-0.5">
+              <div className="text-xs text-blue-700">- Aerobic Base Building Guide <span className="text-blue-400">(official)</span></div>
+              <div className="text-xs text-blue-700">- 2-Mile Run Interval Plans</div>
+            </div>
+          </div>
+        </div>
+        <p className="text-xs text-center text-gray-400 mt-1.5">Each component has its own curated set - easy to miss, worth opening.</p>
+      </div>
+    ),
     detail: 'Save to generate an assessment code: a 22-character snapshot of the session you can share or archive.',
     tab: 'selfcheck',
     icon: (
@@ -45,12 +73,77 @@ const SLIDES = [
   {
     id: 'project',
     title: 'Step 3: See Your Trajectory',
-    body: 'The Project tab turns your history into a forecast. Gap bars show exactly how far each component sits from passing, and the weekly training plan tells you what to work on first - ranked by how many points each session is worth.',
-    detail: 'Add a target PFA date to unlock point-per-week improvement targets and curated training resources for each exercise.',
+    body: 'The Project tab turns your history into a forecast. Gap bars show how far each component sits from passing, ranked by the points each improvement is worth.',
+    content: (
+      <div className="my-3 text-left">
+        <p className="text-xs text-gray-500 font-semibold uppercase tracking-wide mb-2 text-center">Hidden gem: Training Focus</p>
+        <div className="border border-gray-200 rounded-lg overflow-hidden bg-white">
+          <div className="px-3 py-2 flex items-center justify-between bg-gray-50 border-b border-gray-100">
+            <span className="text-xs font-semibold text-gray-800">Core</span>
+            <span className="text-xs bg-red-100 text-red-700 px-1.5 py-0.5 rounded font-semibold">71 pts - FAIL</span>
+          </div>
+          <div className="px-3 py-2 border-t border-orange-100 bg-orange-50">
+            <div className="flex items-center gap-1 text-orange-700">
+              <svg className="w-3 h-3 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+              </svg>
+              <span className="text-xs font-semibold">Training Focus</span>
+              <span className="ml-1 text-xs bg-orange-200 text-orange-800 px-1 py-0.5 rounded font-bold">TOP ROI</span>
+              <span className="ml-auto text-xs text-orange-600 font-medium">0.9 pts/wk</span>
+            </div>
+            <div className="mt-1.5 pl-4 text-xs text-orange-700 space-y-0.5">
+              <div>- Add 2x weekly plank progressions</div>
+              <div>- Focus on hollow-body core activation</div>
+            </div>
+          </div>
+        </div>
+        <p className="text-xs text-center text-gray-400 mt-1.5">Under each component card - shows your highest-ROI moves by points per week.</p>
+      </div>
+    ),
+    detail: 'Add a target PFA date to unlock point-per-week improvement targets for every component.',
     tab: 'project',
     icon: (
       <svg xmlns="http://www.w3.org/2000/svg" className="w-12 h-12 text-blue-600" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
         <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 18L9 11.25l4.306 4.307a11.95 11.95 0 015.814-5.519l2.74-1.22m0 0l-5.94-2.28m5.94 2.28l-2.28 5.941" />
+      </svg>
+    ),
+  },
+  {
+    id: 'weekly-plan',
+    title: 'Your Personalized Weekly Plan',
+    body: 'Below the component projections, the Trajectory tab generates a full week-by-week training schedule - each component prioritized by urgency, with specific daily workouts.',
+    content: (
+      <div className="my-3 text-left">
+        <div className="border border-gray-200 rounded-lg overflow-hidden bg-white">
+          <div className="px-3 py-2.5 flex items-center justify-between bg-white border-b border-gray-100">
+            <span className="text-xs font-semibold text-gray-700">Personalized Weekly Training Plan</span>
+            <span className="text-gray-400 text-xs">▼</span>
+          </div>
+          <div className="px-3 py-2 bg-red-50 border-b border-red-100 flex items-center gap-2">
+            <span className="text-xs px-2 py-0.5 rounded font-semibold bg-red-100 text-red-800">URGENT</span>
+            <span className="text-xs text-gray-600">8 weeks to target PFA date</span>
+          </div>
+          <div className="px-3 py-2.5 border-l-4 border-red-400 ml-3 my-2">
+            <div className="flex items-center gap-1.5 mb-1.5">
+              <span className="text-xs font-bold text-gray-400">#1</span>
+              <span className="text-xs font-semibold text-gray-800">Core</span>
+              <span className="text-xs px-1 py-0.5 rounded bg-red-100 text-red-700 font-medium">FAILING - 4.0% below min</span>
+              <span className="ml-auto text-xs text-gray-500 font-medium">3x / week</span>
+            </div>
+            <div className="space-y-0.5">
+              <div className="flex gap-2 text-xs text-gray-600"><span className="text-gray-400 font-medium shrink-0">Day 1</span><span>3x60s plank + 3x20 hollow rocks</span></div>
+              <div className="flex gap-2 text-xs text-gray-600"><span className="text-gray-400 font-medium shrink-0">Day 2</span><span>4x45s plank + timed test-pace set</span></div>
+            </div>
+          </div>
+        </div>
+        <p className="text-xs text-center text-gray-400 mt-1.5">Scroll below the component cards in the Trajectory tab to find it.</p>
+      </div>
+    ),
+    detail: null,
+    tab: 'project',
+    icon: (
+      <svg xmlns="http://www.w3.org/2000/svg" className="w-12 h-12 text-blue-600" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5m-9-6h.008v.008H12v-.008zM12 15h.008v.008H12V15zm0 2.25h.008v.008H12v-.008zM9.75 15h.008v.008H9.75V15zm0 2.25h.008v.008H9.75v-.008zM7.5 15h.008v.008H7.5V15zm0 2.25h.008v.008H7.5v-.008zm6.75-4.5h.008v.008h-.008v-.008zm0 2.25h.008v.008h-.008V15zm0 2.25h.008v.008h-.008v-.008zm2.25-4.5h.008v.008H16.5v-.008zm0 2.25h.008v.008H16.5V15z" />
       </svg>
     ),
   },
@@ -172,6 +265,9 @@ export default function OnboardingModal() {
         <p className="text-gray-600 mb-3 text-center text-sm">
           {slide.body}
         </p>
+
+        {/* Illustrated content block */}
+        {slide.content && slide.content}
 
         {/* Detail hint */}
         {slide.detail && (
