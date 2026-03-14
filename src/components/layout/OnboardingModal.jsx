@@ -22,7 +22,7 @@ const SLIDES = [
     id: 'profile',
     title: 'Step 1: Build Your Profile',
     body: 'Enter your date of birth, gender, and target PFA date. Trajectory generates a compact profile code that carries your demographics - paste it on any device to pick up where you left off.',
-    detail: 'Your D-code encodes only DOB and gender. No name, no SSN, nothing that identifies you.',
+    detail: 'Your profile code encodes only DOB and gender. No name, no SSN, nothing that identifies you.',
     tab: 'profile',
     icon: (
       <svg xmlns="http://www.w3.org/2000/svg" className="w-12 h-12 text-blue-600" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
@@ -34,7 +34,7 @@ const SLIDES = [
     id: 'selfcheck',
     title: 'Step 2: Record a Self-Check',
     body: 'Log results for any combination of components - run or HAMR, push-ups or hand-release, sit-ups or plank. Scores update live as you type. Partial entries still give you component-level feedback; the composite appears once all four are in.',
-    detail: 'Save to generate an S-code: a 22-character snapshot of the session you can share or archive.',
+    detail: 'Save to generate an assessment code: a 22-character snapshot of the session you can share or archive.',
     tab: 'selfcheck',
     icon: (
       <svg xmlns="http://www.w3.org/2000/svg" className="w-12 h-12 text-blue-600" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
@@ -57,7 +57,7 @@ const SLIDES = [
   {
     id: 'history',
     title: 'Step 4: Track the Trend',
-    body: 'History keeps every S-code you save and renders them as a timeline - composite trend line, per-component sparklines, and raw values side by side. Import codes from other devices to build a complete picture, or export the full set to back it up.',
+    body: 'History keeps every assessment code you save and renders them as a timeline - composite trend line, per-component sparklines, and raw values side by side. Import codes from other devices to build a complete picture, or export the full set to back it up.',
     detail: 'The Report tab converts any selection of self-checks into a formatted supervisor summary, ready to print or copy as plain text.',
     tab: 'history',
     icon: (
