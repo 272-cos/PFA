@@ -22,7 +22,7 @@ import { COMPONENT_WEIGHTS, COMPONENT_MINIMUMS, EXERCISES, PASSING_COMPOSITE, CO
 import { isDiagnosticPeriod, calculateAge, getAgeBracket } from '../../utils/scoring/constants.js'
 import { calculateWHtR, calculateComponentScore, calculateCompositeScore } from '../../utils/scoring/scoringEngine.js'
 import { strategyEngine, EXERCISE_NAMES, IMPROVEMENT_UNIT_LABELS } from '../../utils/scoring/strategyEngine.js'
-import { getRecommendations } from '../../utils/recommendations/recommendationEngine.js'
+import { getRecommendations, generateWeeklyPlan } from '../../utils/recommendations/recommendationEngine.js'
 import { getExercisePrefs } from '../../utils/storage/localStorage.js'
 
 // ─── Constants ─────────────────────────────────────────────────────────────────
@@ -439,6 +439,104 @@ function TrainingFocus({ item, isTopPriority, compType, proj }) {
   )
 }
 
+// ─── Weekly Training Plan ──────────────────────────────────────────────────────
+
+const URGENCY_STYLES = {
+  urgent:    { card: 'border-red-300 bg-red-50',   badge: 'bg-red-100 text-red-800' },
+  standard:  { card: 'border-blue-300 bg-blue-50', badge: 'bg-blue-100 text-blue-800' },
+  long_term: { card: 'border-green-300 bg-green-50', badge: 'bg-green-100 text-green-800' },
+}
+
+function WeeklyTrainingPlan({ plan }) {
+  const [expanded, setExpanded] = useState(true)
+  if (!plan) return null
+
+  const { card: cardStyle, badge: badgeStyle } = URGENCY_STYLES[plan.urgency] ?? URGENCY_STYLES.standard
+
+  return (
+    <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+      <button
+        type="button"
+        onClick={() => setExpanded(!expanded)}
+        className="flex items-center justify-between w-full text-left"
+        aria-expanded={expanded}
+      >
+        <h3 className="text-sm font-semibold text-gray-700">Personalized Weekly Training Plan</h3>
+        <span className="text-gray-400 text-xs">{expanded ? '▲' : '▼'}</span>
+      </button>
+
+      {expanded && (
+        <div className="mt-3 space-y-4">
+          {/* Urgency header */}
+          <div className={`rounded-lg border p-3 flex items-center gap-3 ${cardStyle}`}>
+            <div>
+              <span className={`text-xs px-2 py-0.5 rounded font-semibold ${badgeStyle}`}>
+                {plan.urgencyLabel.toUpperCase()}
+              </span>
+              <p className="text-sm text-gray-700 mt-1">
+                {plan.weeksToTarget} week{plan.weeksToTarget !== 1 ? 's' : ''} to target PFA date
+              </p>
+            </div>
+            {plan.planItems.some(p => p.isFailing) && (
+              <p className="text-xs text-gray-600 ml-auto text-right max-w-[160px]">
+                Focus on failing components first - they have the largest score impact.
+              </p>
+            )}
+          </div>
+
+          {/* Plan items - one per component, sorted by priority */}
+          {plan.planItems.map(item => {
+            const borderColor = item.isFailing ? 'border-red-400' : item.tier === 'marginal' ? 'border-amber-400' : 'border-green-400'
+            const isBodyComp = item.component === 'bodyComp'
+
+            return (
+              <div key={item.component} className={`border-l-4 pl-3 ${borderColor}`}>
+                {/* Component header row */}
+                <div className="flex items-center gap-2 mb-2 flex-wrap">
+                  <span className="text-xs font-bold text-gray-400">#{item.priorityRank}</span>
+                  <span className="text-sm font-semibold text-gray-800">
+                    {COMP_LABELS[item.component]}
+                  </span>
+                  {item.isFailing && (
+                    <span className="text-xs px-1.5 py-0.5 rounded bg-red-100 text-red-700 font-medium">
+                      FAILING - {item.gapBelowMin.toFixed(1)}% below min
+                    </span>
+                  )}
+                  {!item.isFailing && item.tier === 'marginal' && (
+                    <span className="text-xs px-1.5 py-0.5 rounded bg-amber-100 text-amber-700 font-medium">
+                      MARGINAL
+                    </span>
+                  )}
+                  <span className="ml-auto text-xs text-gray-500 font-medium">
+                    {isBodyComp ? 'Daily habits' : `${item.sessionsPerWeek}x / week`}
+                  </span>
+                </div>
+
+                {/* Session workout list */}
+                <ul className="space-y-1.5">
+                  {item.workouts.map((workout, i) => (
+                    <li key={i} className="flex gap-2 text-xs text-gray-600">
+                      <span className="text-gray-400 shrink-0 font-medium">
+                        {isBodyComp ? 'Daily' : `Day ${i + 1}`}
+                      </span>
+                      <span>{workout}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )
+          })}
+
+          {/* Rest day note */}
+          <p className="text-xs text-gray-400 italic border-t border-gray-100 pt-2">
+            {plan.restNote}
+          </p>
+        </div>
+      )}
+    </div>
+  )
+}
+
 // ─── Main Tab ──────────────────────────────────────────────────────────────────
 
 export default function ProjectTab() {
@@ -615,6 +713,54 @@ export default function ProjectTab() {
       return null
     }
   }, [demographics, decodedScodes, targetPfaDate])
+
+  // Weekly training plan input: current component data from most recent S-code
+  const weeklyPlan = useMemo(() => {
+    if (!decodedScodes.length || !targetPfaDate) return null
+    const latest = decodedScodes[decodedScodes.length - 1]
+    const data = {}
+
+    if (latest.cardio) {
+      if (!latest.cardio.exempt && latest.cardio.exercise !== EXERCISES.WALK_2KM) {
+        data.cardio = {
+          percentage: currentPcts.cardio ?? null,
+          exercise: latest.cardio.exercise,
+          exempt: false,
+        }
+      } else if (latest.cardio.exercise === EXERCISES.WALK_2KM && !latest.cardio.exempt) {
+        data.cardio = { percentage: 0, exercise: EXERCISES.WALK_2KM, exempt: false }
+      }
+      // skip exempt
+    }
+    if (latest.strength && !latest.strength.exempt) {
+      data.strength = {
+        percentage: currentPcts.strength ?? null,
+        exercise: latest.strength.exercise,
+        exempt: false,
+      }
+    }
+    if (latest.core && !latest.core.exempt) {
+      data.core = {
+        percentage: currentPcts.core ?? null,
+        exercise: latest.core.exercise,
+        exempt: false,
+      }
+    }
+    if (latest.bodyComp && !latest.bodyComp.exempt && currentPcts.bodyComp != null) {
+      data.bodyComp = {
+        percentage: currentPcts.bodyComp,
+        exercise: EXERCISES.WHTR,
+        exempt: false,
+      }
+    }
+
+    if (Object.keys(data).length === 0) return null
+    try {
+      return generateWeeklyPlan(data, targetPfaDate)
+    } catch {
+      return null
+    }
+  }, [decodedScodes, currentPcts, targetPfaDate])
 
   // Days to target from today
   const today = new Date().toISOString().split('T')[0]
@@ -809,6 +955,11 @@ export default function ProjectTab() {
                 )
               })}
             </div>
+          )}
+
+          {/* ── Weekly Training Plan ──────────────────────────────────────── */}
+          {weeklyPlan && (
+            <WeeklyTrainingPlan plan={weeklyPlan} />
           )}
 
           {/* ── Legend ────────────────────────────────────────────────────── */}
