@@ -392,7 +392,7 @@ export default function PlanTab() {
   const handleToggleDay = useCallback((dow) => {
     setPreferredDays(prev => {
       const next = prev.includes(dow)
-        ? prev.length > 1 ? prev.filter(d => d !== dow) : prev // keep at least 1
+        ? prev.length > 3 ? prev.filter(d => d !== dow) : prev // minimum 3 days
         : [...prev, dow].sort((a, b) => a - b)
       savePreferredDays(next)
       return next
@@ -596,7 +596,7 @@ export default function PlanTab() {
               </div>
               {consecutive && (
                 <div className="mt-1.5 text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded px-2 py-1.5">
-                  Back-to-back days increase injury risk - spacing workouts aids recovery. Train when you can though.
+                  Back-to-back days increase injury risk - spacing workouts aids recovery.
                 </div>
               )}
             </div>
