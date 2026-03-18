@@ -268,7 +268,7 @@ function DayDetail({ dateISO, events, isCompleted, onToggleComplete, onNavigate 
                       <button onClick={() => onNavigate('selfcheck')} className="font-bold underline hover:opacity-70 transition-opacity">
                         Self-Check tab
                       </button>{' '}
-                      under <strong>Practice Mode - Quick Benchmark</strong>. Your predicted score updates the{' '}
+                      under <strong>Practice Check - Quick Benchmark</strong>. Your predicted score updates the{' '}
                       <button onClick={() => onNavigate('project')} className="font-bold underline hover:opacity-70 transition-opacity">
                         Trajectory tab
                       </button>{' '}
@@ -281,7 +281,7 @@ function DayDetail({ dateISO, events, isCompleted, onToggleComplete, onNavigate 
                       <button onClick={() => onNavigate('selfcheck')} className="font-bold underline hover:opacity-70 transition-opacity">
                         Self-Check tab
                       </button>{' '}
-                      under <strong>Practice Mode - Partial Test</strong>
+                      under <strong>Practice Check - Partial Test</strong>
                       ({Math.round(event.fraction * 100)}%). Predicted full-test scores calculated automatically.
                     </div>
                   )}
