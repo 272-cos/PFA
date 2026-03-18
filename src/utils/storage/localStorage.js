@@ -220,6 +220,7 @@ export function clearAllData() {
     localStorage.removeItem('pfa_outliers')
     localStorage.removeItem('pfa_exercise_prefs')
     localStorage.removeItem('pfa_personal_goal')
+    localStorage.removeItem('pfa_practice_sessions')
     localStorage.removeItem(DRAFT_KEY)
   } catch (error) {
     console.error('Error clearing localStorage:', error)
@@ -262,6 +263,62 @@ export function saveExercisePrefs(prefs) {
     localStorage.setItem('pfa_exercise_prefs', JSON.stringify(prefs))
   } catch (error) {
     console.error('Error saving exercise preferences:', error)
+  }
+}
+
+// ── Practice sessions ────────────────────────────────────────────────────────
+
+const PRACTICE_SESSIONS_KEY = 'pfa_practice_sessions'
+
+/**
+ * Get all practice sessions from localStorage.
+ * @returns {object[]} Array of practice session objects
+ */
+export function getPracticeSessions() {
+  try {
+    const val = localStorage.getItem(PRACTICE_SESSIONS_KEY)
+    return val ? JSON.parse(val) : []
+  } catch {
+    return []
+  }
+}
+
+/**
+ * Save a new practice session to localStorage.
+ * TR-05: Practice sessions are never encoded into S-codes.
+ * @param {object} session - Practice session object
+ */
+export function savePracticeSession(session) {
+  try {
+    const sessions = getPracticeSessions()
+    sessions.push(session)
+    localStorage.setItem(PRACTICE_SESSIONS_KEY, JSON.stringify(sessions))
+  } catch (error) {
+    console.error('Error saving practice session:', error)
+  }
+}
+
+/**
+ * Remove a practice session by its id field.
+ * @param {number|string} id - Session id
+ */
+export function removePracticeSession(id) {
+  try {
+    const sessions = getPracticeSessions().filter(s => s.id !== id)
+    localStorage.setItem(PRACTICE_SESSIONS_KEY, JSON.stringify(sessions))
+  } catch (error) {
+    console.error('Error removing practice session:', error)
+  }
+}
+
+/**
+ * Clear all practice sessions from localStorage.
+ */
+export function clearPracticeSessions() {
+  try {
+    localStorage.removeItem(PRACTICE_SESSIONS_KEY)
+  } catch {
+    // ignore
   }
 }
 

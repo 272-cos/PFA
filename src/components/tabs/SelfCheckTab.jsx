@@ -4,15 +4,21 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { useApp } from '../../context/AppContext.jsx'
-import { encodeSCode } from '../../utils/codec/scode.js'
+import { encodeSCode, decodeSCode } from '../../utils/codec/scode.js'
 import { EXERCISES, COMPONENTS } from '../../utils/scoring/constants.js'
 import { calculateAge, getAgeBracket, isDiagnosticPeriod, getWalkTimeLimit } from '../../utils/scoring/constants.js'
 import { calculateComponentScore, calculateCompositeScore, calculateWHtR, parseTime, formatTime, isTimeIncomplete, hamrTimeToShuttles } from '../../utils/scoring/scoringEngine.js'
 import { EXERCISE_NAMES } from '../../utils/scoring/strategyEngine.js'
 import ExerciseComparison from './ExerciseComparison.jsx'
-import { getExercisePrefs, saveExercisePrefs, saveDraft, loadDraft, clearDraft } from '../../utils/storage/localStorage.js'
+import { getExercisePrefs, saveExercisePrefs, saveDraft, loadDraft, clearDraft, savePracticeSession, getPracticeSessions } from '../../utils/storage/localStorage.js'
 import { getTrainingResources } from '../../utils/training/resources.js'
 import ShareModal from '../shared/ShareModal.jsx'
+import {
+  PI_EXERCISES, PI_EXERCISE_LABELS, PI_IS_TIME, PI_TO_FULL_EXERCISE,
+  scalePIWorkout, scaleFractionalTest,
+  isMockTestWindow, isInTaperPeriod, hasMockTestBeenRecorded,
+  formatSecondsMMSS,
+} from '../../utils/training/practiceSession.js'
 
 const BASE_URL = import.meta.env.BASE_URL
 
@@ -34,7 +40,7 @@ function formatTimeInput(rawValue) {
 }
 
 export default function SelfCheckTab() {
-  const { demographics, addSCode, removeSCode, dcode, setSelfCheckDirty, registerSelfCheckGenerator } = useApp()
+  const { demographics, addSCode, removeSCode, dcode, setSelfCheckDirty, registerSelfCheckGenerator, targetPfaDate, scodes } = useApp()
 
   // IV-01: Assessment date - picker with max = today
   const today = new Date().toISOString().split('T')[0]
@@ -79,6 +85,9 @@ export default function SelfCheckTab() {
   const [draftSavedVisible, setDraftSavedVisible] = useState(false)
   const [lastSavedSnapshot, setLastSavedSnapshot] = useState(null) // For undo
   const [showShareModal, setShowShareModal] = useState(false)
+
+  // Practice Mode state
+  const [practiceMode, setPracticeMode] = useState(false)
 
   // ── Draft restore on mount ─────────────────────────────────────────────────
   useEffect(() => {
@@ -531,6 +540,12 @@ export default function SelfCheckTab() {
 
   const isDiagnostic = isDiagnosticPeriod(assessmentDate)
 
+  // Mock test / taper window detection (TR-01, TR-02, TR-09, TR-10)
+  const todayISO = today
+  const mockTestWindow = isMockTestWindow(targetPfaDate, todayISO)
+  const taperPeriod = isInTaperPeriod(targetPfaDate, todayISO)
+  const mockTestRecorded = hasMockTestBeenRecorded(scodes, decodeSCode, targetPfaDate)
+
   // IV-10: Warn when all components are exempt
   const allExempt = cardioExempt && strengthExempt && coreExempt && bodyCompExempt
 
@@ -548,6 +563,74 @@ export default function SelfCheckTab() {
 
   return (
     <div className="space-y-6">
+      {/* TR-09: Mock test window banner - informational only */}
+      {mockTestWindow && !mockTestRecorded && (
+        <div className="p-4 bg-amber-50 border-2 border-amber-400 rounded-lg">
+          <p className="text-sm font-bold text-amber-900 mb-1">You are in the Mock Test Window</p>
+          <p className="text-sm text-amber-800">
+            Your PFA is approximately 2 weeks away. Consider running your full mock test now - one time only.
+            After the mock test, reduce training volume by 50% and let your body supercompensate.
+          </p>
+        </div>
+      )}
+
+      {/* TR-02: Post-mock-test taper prompt */}
+      {mockTestRecorded && taperPeriod && (
+        <div className="p-4 bg-green-50 border-2 border-green-500 rounded-lg">
+          <p className="text-sm font-bold text-green-900 mb-1">Mock Test Recorded - Time to Taper</p>
+          <p className="text-sm text-green-800">
+            You proved you can do this. Reduce training volume by 50% until test day.
+            Avoid hard efforts - let supercompensation work. Short, easy sessions only.
+          </p>
+        </div>
+      )}
+
+      {/* TR-10: Taper period reminder (even without mock test) */}
+      {taperPeriod && !mockTestRecorded && !mockTestWindow && (
+        <div className="p-3 bg-blue-50 border border-blue-300 rounded-lg">
+          <p className="text-sm text-blue-800">
+            <span className="font-bold">Taper period:</span> Your PFA is within 2 weeks. Reduce training volume by 50% and avoid hard efforts until test day.
+          </p>
+        </div>
+      )}
+
+      {/* Practice Mode toggle */}
+      <div className="flex items-center justify-between bg-gray-50 border border-gray-200 rounded-lg px-4 py-3">
+        <div>
+          <p className="text-sm font-medium text-gray-800">Practice Check</p>
+          <p className="text-xs text-gray-500">Record PI workouts and fractional tests without generating an S-code</p>
+        </div>
+        <button
+          type="button"
+          role="switch"
+          aria-checked={practiceMode}
+          aria-label="Toggle practice check mode"
+          onClick={() => setPracticeMode(m => !m)}
+          className={`relative inline-flex h-6 w-10 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
+            practiceMode ? 'bg-blue-600' : 'bg-gray-300'
+          }`}
+        >
+          <span
+            aria-hidden="true"
+            className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
+              practiceMode ? 'translate-x-4' : 'translate-x-0'
+            }`}
+          />
+        </button>
+      </div>
+
+      {/* Practice mode: replace normal form */}
+      {practiceMode && (
+        <PracticeCheckForm
+          demographics={demographics}
+          assessmentDate={assessmentDate}
+          onDateChange={setAssessmentDate}
+          today={today}
+        />
+      )}
+
+      {practiceMode ? null : (
+      <>
       {/* Draft restored notification */}
       {draftRestored && (
         <div className="p-2 bg-blue-50 border border-blue-200 rounded-lg text-blue-700 text-xs text-center">
@@ -1010,6 +1093,346 @@ export default function SelfCheckTab() {
             </div>
           </div>
         )}
+      </div>
+      </>
+      )}
+    </div>
+  )
+}
+
+// ── Practice Check Form ──────────────────────────────────────────────────────
+
+/**
+ * PracticeCheckForm - renders when practice mode is ON.
+ * Supports PI Workout (30-sec benchmarks) and Fractional Tests (50% / 75%).
+ * TR-05: saves to pfa_practice_sessions, never to S-codes.
+ */
+function PracticeCheckForm({ demographics, assessmentDate, onDateChange, today }) {
+  const [practiceType, setPracticeType] = useState('pi_workout')
+  const [practiceDate, setPracticeDate] = useState(assessmentDate)
+
+  // PI Workout state
+  const [piExercise, setPiExercise] = useState(PI_EXERCISES.PUSHUPS_30S)
+  const [piValue, setPiValue] = useState('')
+  const [piScaled, setPiScaled] = useState(null)
+
+  // Fractional Test state
+  const [fraction, setFraction] = useState(0.5)
+  const [fracCardioValue, setFracCardioValue] = useState('')
+  const [fracStrengthValue, setFracStrengthValue] = useState('')
+  const [fracCoreValue, setFracCoreValue] = useState('')
+  const [fracCardioExercise, setFracCardioExercise] = useState(EXERCISES.RUN_2MILE)
+  const [fracStrengthExercise, setFracStrengthExercise] = useState(EXERCISES.PUSHUPS)
+  const [fracCoreExercise, setFracCoreExercise] = useState(EXERCISES.SITUPS)
+
+  // Save state
+  const [saveSuccess, setSaveSuccess] = useState('')
+  const [saveError, setSaveError] = useState('')
+
+  // Compute PI scale on input change
+  useEffect(() => {
+    if (!piValue) { setPiScaled(null); return }
+    const raw = PI_IS_TIME[piExercise] ? parseTime(piValue) : parseInt(piValue, 10)
+    if (!raw && raw !== 0) { setPiScaled(null); return }
+    setPiScaled(scalePIWorkout(piExercise, raw))
+  }, [piExercise, piValue])
+
+  // Compute fractional test scaled predictions
+  const fracScaled = {
+    cardio: fracCardioValue ? (() => {
+      const raw = fracCardioExercise === EXERCISES.RUN_2MILE ? parseTime(fracCardioValue) : parseInt(fracCardioValue, 10)
+      return raw ? scaleFractionalTest(fracCardioExercise, fraction, raw) : null
+    })() : null,
+    strength: fracStrengthValue ? (() => {
+      const raw = parseInt(fracStrengthValue, 10)
+      return raw ? scaleFractionalTest(fracStrengthExercise, fraction, raw) : null
+    })() : null,
+    core: fracCoreValue ? (() => {
+      const raw = fracCoreExercise === EXERCISES.PLANK ? parseTime(fracCoreValue) : parseInt(fracCoreValue, 10)
+      return raw ? scaleFractionalTest(fracCoreExercise, fraction, raw) : null
+    })() : null,
+  }
+
+  const pct = Math.round(fraction * 100)
+
+  const handleSavePI = () => {
+    setSaveError('')
+    if (!piValue) { setSaveError('Enter your result first.'); return }
+    const raw = PI_IS_TIME[piExercise] ? parseTime(piValue) : parseInt(piValue, 10)
+    if (!raw && raw !== 0) { setSaveError('Invalid value.'); return }
+    const scaled = scalePIWorkout(piExercise, raw)
+    if (!scaled) { setSaveError('Could not scale this exercise type.'); return }
+
+    const session = {
+      id: Date.now(),
+      savedAt: new Date().toISOString(),
+      date: practiceDate,
+      type: 'pi_workout',
+      piExercise,
+      piValue: raw,
+      scaled,
+    }
+    savePracticeSession(session)
+    setPiValue('')
+    setPiScaled(null)
+    setSaveSuccess('Practice session saved.')
+    setTimeout(() => setSaveSuccess(''), 3000)
+  }
+
+  const handleSaveFractional = () => {
+    setSaveError('')
+    const hasAny = fracCardioValue || fracStrengthValue || fracCoreValue
+    if (!hasAny) { setSaveError('Enter at least one component result.'); return }
+
+    const components = {}
+    if (fracCardioValue) {
+      const raw = fracCardioExercise === EXERCISES.RUN_2MILE ? parseTime(fracCardioValue) : parseInt(fracCardioValue, 10)
+      if (raw) components.cardio = { exercise: fracCardioExercise, value: raw, scaled: fracScaled.cardio }
+    }
+    if (fracStrengthValue) {
+      const raw = parseInt(fracStrengthValue, 10)
+      if (raw || raw === 0) components.strength = { exercise: fracStrengthExercise, value: raw, scaled: fracScaled.strength }
+    }
+    if (fracCoreValue) {
+      const raw = fracCoreExercise === EXERCISES.PLANK ? parseTime(fracCoreValue) : parseInt(fracCoreValue, 10)
+      if (raw || raw === 0) components.core = { exercise: fracCoreExercise, value: raw, scaled: fracScaled.core }
+    }
+
+    const session = {
+      id: Date.now(),
+      savedAt: new Date().toISOString(),
+      date: practiceDate,
+      type: 'fractional_test',
+      fraction,
+      components,
+    }
+    savePracticeSession(session)
+    setFracCardioValue('')
+    setFracStrengthValue('')
+    setFracCoreValue('')
+    setSaveSuccess('Fractional test saved.')
+    setTimeout(() => setSaveSuccess(''), 3000)
+  }
+
+  return (
+    <div className="space-y-4">
+      {/* Date + type selector */}
+      <div className="bg-white rounded-lg shadow-md p-6">
+        <h2 className="text-xl font-bold text-gray-900 mb-4">Practice Check</h2>
+
+        <div className="mb-4">
+          <label htmlFor="practice-date" className="block text-sm font-medium text-gray-700 mb-2">Date</label>
+          <input
+            id="practice-date"
+            type="date"
+            value={practiceDate}
+            onChange={e => setPracticeDate(e.target.value)}
+            max={today}
+            className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+          />
+        </div>
+
+        <div className="mb-4">
+          <label className="block text-sm font-medium text-gray-700 mb-2">Practice Type</label>
+          <SegmentedControl
+            options={[
+              { value: 'pi_workout', label: 'PI Workout' },
+              { value: 'fractional_test', label: 'Fractional Test' },
+            ]}
+            value={practiceType}
+            onChange={setPracticeType}
+          />
+          <p className="text-xs text-gray-500 mt-2">
+            {practiceType === 'pi_workout'
+              ? 'PI Workouts: short sub-maximal benchmarks (30-sec counts, 1-mile run). These feel like warmups, not tests.'
+              : 'Fractional Tests: perform at 50% or 75% of the standard. Milestone check-ins, not scored.'}
+          </p>
+        </div>
+
+        {/* PI Workout form */}
+        {practiceType === 'pi_workout' && (
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Exercise</label>
+              <div className="grid grid-cols-2 gap-2">
+                {Object.entries(PI_EXERCISE_LABELS).map(([key, label]) => (
+                  <button
+                    key={key}
+                    type="button"
+                    onClick={() => { setPiExercise(key); setPiValue(''); setPiScaled(null) }}
+                    className={`px-3 py-2 text-sm rounded-lg border transition-colors text-left ${
+                      piExercise === key
+                        ? 'bg-blue-600 text-white border-blue-600'
+                        : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+                    }`}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                {PI_IS_TIME[piExercise] ? 'Time (mm:ss)' : 'Reps'}
+              </label>
+              <input
+                type="text"
+                inputMode="numeric"
+                value={piValue}
+                onChange={e => setPiValue(PI_IS_TIME[piExercise] ? formatTimeInput(e.target.value) : e.target.value.replace(/\D/g, ''))}
+                placeholder={PI_IS_TIME[piExercise] ? '8:30' : '21'}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg"
+              />
+            </div>
+
+            {/* TR-03: scaled prediction with confidence note */}
+            {piScaled && (
+              <div className="p-3 bg-indigo-50 border border-indigo-200 rounded-lg">
+                <p className="text-sm font-medium text-indigo-900">{piScaled.displayText}</p>
+                <p className="text-xs text-indigo-600 mt-1">Estimated - {piScaled.confidenceNote}</p>
+              </div>
+            )}
+
+            <button
+              type="button"
+              onClick={handleSavePI}
+              className="w-full bg-gray-700 hover:bg-gray-800 text-white font-medium py-3 px-4 rounded-lg transition-colors"
+            >
+              Save Practice Session
+            </button>
+          </div>
+        )}
+
+        {/* Fractional Test form */}
+        {practiceType === 'fractional_test' && (
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Fraction of Standard</label>
+              <SegmentedControl
+                options={[
+                  { value: 0.5, label: '50% - Midpoint Check' },
+                  { value: 0.75, label: '75% - Final Approach' },
+                ]}
+                value={fraction}
+                onChange={v => setFraction(Number(v))}
+              />
+              <p className="text-xs text-gray-500 mt-1">
+                {pct}% test: {pct === 50 ? 'half the reps, half the distance' : '75% of the reps and distance'}
+              </p>
+            </div>
+
+            {/* Cardio */}
+            <div className="border-t pt-4">
+              <p className="text-sm font-semibold text-gray-800 mb-2">
+                Cardio - {pct === 50 ? '1-mile' : '1.5-mile'} run (or enter HAMR shuttles)
+              </p>
+              <div className="flex gap-2 mb-2">
+                {[EXERCISES.RUN_2MILE, EXERCISES.HAMR].map(ex => (
+                  <button key={ex} type="button"
+                    onClick={() => { setFracCardioExercise(ex); setFracCardioValue('') }}
+                    className={`px-3 py-1.5 text-xs rounded border transition-colors ${fracCardioExercise === ex ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-gray-600 border-gray-300'}`}
+                  >
+                    {ex === EXERCISES.RUN_2MILE ? 'Run' : 'HAMR'}
+                  </button>
+                ))}
+              </div>
+              <input
+                type="text"
+                inputMode="numeric"
+                value={fracCardioValue}
+                onChange={e => setFracCardioValue(fracCardioExercise === EXERCISES.RUN_2MILE ? formatTimeInput(e.target.value) : e.target.value.replace(/\D/g, ''))}
+                placeholder={fracCardioExercise === EXERCISES.RUN_2MILE ? '8:30' : '47'}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg"
+              />
+              {/* TR-04: labeled with fraction */}
+              {fracScaled.cardio && (
+                <p className="text-xs text-indigo-700 mt-1">{fracScaled.cardio.displayText} - {fracScaled.cardio.confidenceNote}</p>
+              )}
+            </div>
+
+            {/* Strength */}
+            <div className="border-t pt-4">
+              <p className="text-sm font-semibold text-gray-800 mb-2">
+                Strength - {pct}% target reps
+              </p>
+              <div className="flex gap-2 mb-2">
+                {[EXERCISES.PUSHUPS, EXERCISES.HRPU].map(ex => (
+                  <button key={ex} type="button"
+                    onClick={() => { setFracStrengthExercise(ex); setFracStrengthValue('') }}
+                    className={`px-3 py-1.5 text-xs rounded border transition-colors ${fracStrengthExercise === ex ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-gray-600 border-gray-300'}`}
+                  >
+                    {ex === EXERCISES.PUSHUPS ? 'Push-ups' : 'HRPU'}
+                  </button>
+                ))}
+              </div>
+              <input
+                type="text"
+                inputMode="numeric"
+                value={fracStrengthValue}
+                onChange={e => setFracStrengthValue(e.target.value.replace(/\D/g, ''))}
+                placeholder="21"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg"
+              />
+              {fracScaled.strength && (
+                <p className="text-xs text-indigo-700 mt-1">{fracScaled.strength.displayText} - {fracScaled.strength.confidenceNote}</p>
+              )}
+            </div>
+
+            {/* Core */}
+            <div className="border-t pt-4">
+              <p className="text-sm font-semibold text-gray-800 mb-2">
+                Core - {pct}% target reps / hold
+              </p>
+              <div className="flex gap-2 mb-2">
+                {[EXERCISES.SITUPS, EXERCISES.CLRC, EXERCISES.PLANK].map(ex => (
+                  <button key={ex} type="button"
+                    onClick={() => { setFracCoreExercise(ex); setFracCoreValue('') }}
+                    className={`px-3 py-1.5 text-xs rounded border transition-colors ${fracCoreExercise === ex ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-gray-600 border-gray-300'}`}
+                  >
+                    {ex === EXERCISES.SITUPS ? 'Sit-ups' : ex === EXERCISES.CLRC ? 'CLRC' : 'Plank'}
+                  </button>
+                ))}
+              </div>
+              <input
+                type="text"
+                inputMode="numeric"
+                value={fracCoreValue}
+                onChange={e => setFracCoreValue(fracCoreExercise === EXERCISES.PLANK ? formatTimeInput(e.target.value) : e.target.value.replace(/\D/g, ''))}
+                placeholder={fracCoreExercise === EXERCISES.PLANK ? '1:15' : '21'}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg"
+              />
+              {fracScaled.core && (
+                <p className="text-xs text-indigo-700 mt-1">{fracScaled.core.displayText} - {fracScaled.core.confidenceNote}</p>
+              )}
+            </div>
+
+            <button
+              type="button"
+              onClick={handleSaveFractional}
+              className="w-full bg-gray-700 hover:bg-gray-800 text-white font-medium py-3 px-4 rounded-lg transition-colors"
+            >
+              Save {pct}% Fractional Test
+            </button>
+          </div>
+        )}
+
+        {/* Success / error feedback */}
+        {saveSuccess && (
+          <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded-lg text-green-800 text-sm">
+            {saveSuccess} Practice sessions appear in History with a gray border and feed the Trajectory projection.
+          </div>
+        )}
+        {saveError && (
+          <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-800 text-sm">
+            {saveError}
+          </div>
+        )}
+
+        <p className="text-xs text-gray-400 mt-4">
+          Practice sessions are stored locally and never encoded into assessment codes (S-codes).
+          They appear in History below your official assessments and contribute scaled data to the Trajectory projection.
+        </p>
       </div>
     </div>
   )
