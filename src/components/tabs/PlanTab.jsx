@@ -261,13 +261,13 @@ function DayDetail({ dateISO, events, isCompleted, onToggleComplete }) {
                   )}
                   {event.type === EVENT_TYPES.PI_WORKOUT && (
                     <div className="bg-blue-50 border border-blue-200 rounded-lg p-2 text-xs text-blue-700">
-                      Record in Self-Check tab under Practice Mode - PI Workout. Your predicted score
-                      updates the Trajectory tab automatically.
+                      Record in Self-Check tab under Practice Mode - Quick Benchmark. Your predicted
+                      score updates the Trajectory tab automatically.
                     </div>
                   )}
                   {event.type === EVENT_TYPES.FRACTIONAL_TEST && (
                     <div className="bg-purple-50 border border-purple-200 rounded-lg p-2 text-xs text-purple-700">
-                      Record in Self-Check tab under Practice Mode - Fractional Test
+                      Record in Self-Check tab under Practice Mode - Partial Test
                       ({Math.round(event.fraction * 100)}%). Predicted full-test scores calculated automatically.
                     </div>
                   )}
@@ -627,8 +627,8 @@ export default function PlanTab() {
         <div className="mt-3 pt-3 border-t border-gray-100 flex flex-wrap gap-x-3 gap-y-1">
           {[
             { dot: 'bg-green-500',  label: 'Training' },
-            { dot: 'bg-blue-500',   label: 'PI' },
-            { dot: 'bg-purple-500', label: 'Frac. Test' },
+            { dot: 'bg-blue-500',   label: 'Quick Benchmark' },
+            { dot: 'bg-purple-500', label: 'Partial Test' },
             { dot: 'bg-orange-500', label: 'Mock' },
             { dot: 'bg-red-500',    label: 'Test Day' },
             { dot: 'bg-amber-400',  label: 'Taper' },
