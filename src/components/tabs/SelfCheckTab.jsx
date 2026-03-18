@@ -42,9 +42,10 @@ function formatTimeInput(rawValue) {
 export default function SelfCheckTab() {
   const { demographics, addSCode, removeSCode, dcode, setSelfCheckDirty, registerSelfCheckGenerator, targetPfaDate, scodes } = useApp()
 
-  // IV-01: Assessment date - picker with max = today
-  const today = new Date().toISOString().split('T')[0]
-  const [assessmentDate, setAssessmentDate] = useState(today)
+  // IV-01: Assessment date - picker with max = today (local date, not UTC)
+  const _now = new Date()
+  const today = `${_now.getFullYear()}-${String(_now.getMonth() + 1).padStart(2, '0')}-${String(_now.getDate()).padStart(2, '0')}`
+  const [assessmentDate, setAssessmentDate] = useState('')
 
   // Cardio
   const [cardioExercise, setCardioExercise] = useState(EXERCISES.RUN_2MILE)
@@ -166,7 +167,7 @@ export default function SelfCheckTab() {
 
   // Calculate scores whenever inputs change
   useEffect(() => {
-    if (!hasDemographics) {
+    if (!hasDemographics || !assessmentDate) {
       setScores(null)
       return
     }
@@ -319,6 +320,11 @@ export default function SelfCheckTab() {
 
     if (!hasDemographics) {
       setError('Please create your profile first (Profile tab)')
+      return false
+    }
+
+    if (!assessmentDate) {
+      setError('Please select an assessment date.')
       return false
     }
 
@@ -598,7 +604,7 @@ export default function SelfCheckTab() {
       <div className="flex items-center justify-between bg-gray-50 border border-gray-200 rounded-lg px-4 py-3">
         <div>
           <p className="text-sm font-medium text-gray-800">Practice Check</p>
-          <p className="text-xs text-gray-500">Record PI workouts and fractional tests without generating an S-code</p>
+          <p className="text-xs text-gray-500">Log a training workout or partial test run without saving an official assessment</p>
         </div>
         <button
           type="button"
@@ -1210,7 +1216,7 @@ function PracticeCheckForm({ demographics, assessmentDate, onDateChange, today }
     setFracCardioValue('')
     setFracStrengthValue('')
     setFracCoreValue('')
-    setSaveSuccess('Fractional test saved.')
+    setSaveSuccess('Partial test saved.')
     setTimeout(() => setSaveSuccess(''), 3000)
   }
 
@@ -1236,16 +1242,16 @@ function PracticeCheckForm({ demographics, assessmentDate, onDateChange, today }
           <label className="block text-sm font-medium text-gray-700 mb-2">Practice Type</label>
           <SegmentedControl
             options={[
-              { value: 'pi_workout', label: 'PI Workout' },
-              { value: 'fractional_test', label: 'Fractional Test' },
+              { value: 'pi_workout', label: 'Quick Benchmark' },
+              { value: 'fractional_test', label: 'Partial Test' },
             ]}
             value={practiceType}
             onChange={setPracticeType}
           />
           <p className="text-xs text-gray-500 mt-2">
             {practiceType === 'pi_workout'
-              ? 'PI Workouts: short sub-maximal benchmarks (30-sec counts, 1-mile run). These feel like warmups, not tests.'
-              : 'Fractional Tests: perform at 50% or 75% of the standard. Milestone check-ins, not scored.'}
+              ? 'Quick Benchmarks: short timed efforts (30-sec counts, 1-mile run) that estimate your full-test result. Easier than a full test.'
+              : 'Partial Tests: perform at 50% or 75% of the standard to check your progress. Not scored officially.'}
           </p>
         </div>
 
@@ -1412,7 +1418,7 @@ function PracticeCheckForm({ demographics, assessmentDate, onDateChange, today }
               onClick={handleSaveFractional}
               className="w-full bg-gray-700 hover:bg-gray-800 text-white font-medium py-3 px-4 rounded-lg transition-colors"
             >
-              Save {pct}% Fractional Test
+              Save {pct}% Partial Test
             </button>
           </div>
         )}
@@ -1430,8 +1436,8 @@ function PracticeCheckForm({ demographics, assessmentDate, onDateChange, today }
         )}
 
         <p className="text-xs text-gray-400 mt-4">
-          Practice sessions are stored locally and never encoded into assessment codes (S-codes).
-          They appear in History below your official assessments and contribute scaled data to the Trajectory projection.
+          Practice sessions are stored only on your device and never saved as official assessments.
+          They appear in History below your official results and feed into the Trajectory projection.
         </p>
       </div>
     </div>
