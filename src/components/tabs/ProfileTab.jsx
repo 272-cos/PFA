@@ -165,6 +165,7 @@ export default function ProfileTab() {
       if (!targetPfaDate) {
         setSuccess("Profile loaded! Don't forget to set your Target PFA Date.")
         setHighlightTargetDate(true)
+        setTimeout(() => document.getElementById('target-date')?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 50)
       } else {
         setSuccess('Profile code loaded successfully!')
       }
@@ -258,7 +259,7 @@ export default function ProfileTab() {
                 targetDateError
                   ? 'border-red-400'
                   : highlightTargetDate
-                  ? 'border-amber-400 animate-pulse'
+                  ? 'border-amber-500 ring-2 ring-amber-300 ring-offset-1 animate-pulse'
                   : 'border-gray-300'
               }`}
             />
