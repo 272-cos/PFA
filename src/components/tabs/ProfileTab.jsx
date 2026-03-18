@@ -162,7 +162,7 @@ export default function ProfileTab() {
       setGender(decoded.gender)
       setPasteCode('')
       if (!targetPfaDate) {
-        setSuccess('Profile loaded! Set your Target PFA Date below.')
+        setSuccess('Profile loaded! Set your Target PFA Date above.')
         setTimeout(() => document.getElementById('target-date')?.focus(), 50)
       } else {
         setSuccess('Profile code loaded successfully!')
