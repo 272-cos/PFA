@@ -462,7 +462,7 @@ export default function PlanTab() {
       <div className="bg-white rounded-xl shadow-md p-6">
         <h2 className="text-xl font-bold text-gray-900 mb-2">Training Plan</h2>
         <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 text-sm text-amber-800">
-          <strong>Profile required.</strong> Set up your D-code in the Profile tab. Your age
+          <strong>Profile required.</strong> Set up your D-code in the <strong>Profile tab</strong>. Your age
           bracket is needed to generate a personalized training plan.
         </div>
       </div>
@@ -474,7 +474,7 @@ export default function PlanTab() {
       <div className="bg-white rounded-xl shadow-md p-6">
         <h2 className="text-xl font-bold text-gray-900 mb-2">Training Plan</h2>
         <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 text-sm text-amber-800">
-          <strong>Target PFA date required.</strong> Set your target date in the Profile tab.
+          <strong>Target PFA date required.</strong> Set your target date in the <strong>Profile tab</strong>.
         </div>
       </div>
     )
