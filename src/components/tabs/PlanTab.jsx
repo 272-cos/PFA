@@ -624,11 +624,13 @@ export default function PlanTab() {
                     : 'bg-gray-100 border-gray-200 text-gray-400 cursor-not-allowed',
                 ].join(' ')}
               >
-                {!readyToConfirm
+                {pendingDays.length < 3
                   ? `Select ${3 - pendingDays.length} more day${3 - pendingDays.length !== 1 ? 's' : ''} to confirm`
-                  : !changed
-                    ? 'No changes to apply'
-                    : 'Confirm - regenerate calendar'}
+                  : pendingDays.length > 3
+                    ? `Deselect ${pendingDays.length - 3} day${pendingDays.length - 3 !== 1 ? 's' : ''} to confirm`
+                    : !changed
+                      ? 'No changes to apply'
+                      : 'Confirm - regenerate calendar'}
               </button>
             </div>
           )
