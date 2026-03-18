@@ -23,7 +23,8 @@ import { isDiagnosticPeriod, calculateAge, getAgeBracket } from '../../utils/sco
 import { calculateWHtR, calculateComponentScore, calculateCompositeScore } from '../../utils/scoring/scoringEngine.js'
 import { strategyEngine, EXERCISE_NAMES, IMPROVEMENT_UNIT_LABELS } from '../../utils/scoring/strategyEngine.js'
 import { getRecommendations, generateWeeklyPlan } from '../../utils/recommendations/recommendationEngine.js'
-import { getExercisePrefs } from '../../utils/storage/localStorage.js'
+import { getExercisePrefs, getPracticeSessions } from '../../utils/storage/localStorage.js'
+import { scalePIWorkout } from '../../utils/training/practiceSession.js'
 
 // ─── Constants ─────────────────────────────────────────────────────────────────
 
@@ -110,7 +111,7 @@ function exerciseName(exercise) {
 
 // ─── Projection Trajectory Chart ──────────────────────────────────────────────
 
-function ProjectionChart({ historicalScores, projectedComposite, targetDate }) {
+function ProjectionChart({ historicalScores, projectedComposite, targetDate, practicePredictions }) {
   if (historicalScores.length === 0) return null
 
   // Build chart data: historical points + projected endpoint
@@ -119,6 +120,7 @@ function ProjectionChart({ historicalScores, projectedComposite, targetDate }) {
     rawDate: h.date,
     actual: h.composite,
     projected: null,
+    practice: null,
   }))
 
   // Add projection line: last actual point to projected target
@@ -134,7 +136,33 @@ function ProjectionChart({ historicalScores, projectedComposite, targetDate }) {
       rawDate: targetDate,
       actual: null,
       projected: projectedComposite,
+      practice: null,
     })
+  }
+
+  // Merge scaled practice data points (dotted overlay)
+  const hasPracticeData = practicePredictions && practicePredictions.length > 0
+  if (hasPracticeData) {
+    practicePredictions.forEach(p => {
+      if (p.date && p.predictedComposite != null) {
+        const dateLabel = new Date(p.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+        // Find existing chart entry for this date or insert a new one
+        const existing = chartData.find(d => d.rawDate === p.date)
+        if (existing) {
+          existing.practice = p.predictedComposite
+        } else {
+          chartData.push({
+            date: dateLabel,
+            rawDate: p.date,
+            actual: null,
+            projected: null,
+            practice: p.predictedComposite,
+          })
+        }
+      }
+    })
+    // Re-sort by date
+    chartData.sort((a, b) => new Date(a.rawDate) - new Date(b.rawDate))
   }
 
   return (
@@ -161,7 +189,7 @@ function ProjectionChart({ historicalScores, projectedComposite, targetDate }) {
             <Tooltip
               formatter={(value, name) => [
                 value != null ? value.toFixed(1) : '-',
-                name === 'actual' ? 'Actual' : 'Projected',
+                name === 'actual' ? 'Actual' : name === 'projected' ? 'Projected' : 'Practice (scaled)',
               ]}
               contentStyle={{ fontSize: 12, borderRadius: 6 }}
             />
@@ -190,6 +218,18 @@ function ProjectionChart({ historicalScores, projectedComposite, targetDate }) {
               dot={{ r: 5, fill: '#f59e0b', stroke: 'white', strokeWidth: 2 }}
               connectNulls={false}
             />
+            {/* Practice scaled data - dotted, translucent */}
+            {hasPracticeData && (
+              <Line
+                type="monotone"
+                dataKey="practice"
+                stroke="#6b7280"
+                strokeWidth={1.5}
+                strokeDasharray="2 3"
+                dot={{ r: 3, fill: '#9ca3af', stroke: 'white', strokeWidth: 1 }}
+                connectNulls={false}
+              />
+            )}
           </LineChart>
         </ResponsiveContainer>
       </div>
@@ -206,6 +246,12 @@ function ProjectionChart({ historicalScores, projectedComposite, targetDate }) {
           <span className="inline-block w-4 h-0.5 bg-red-400" style={{ borderTop: '2px dashed #ef4444', height: 0 }} />
           Pass (75)
         </span>
+        {hasPracticeData && (
+          <span className="flex items-center gap-1.5">
+            <span className="inline-block w-4 h-0.5 bg-gray-400" style={{ borderTop: '2px dotted #9ca3af', height: 0 }} />
+            Practice (scaled)
+          </span>
+        )}
       </div>
     </div>
   )
@@ -675,6 +721,75 @@ export default function ProjectTab() {
     }).filter(Boolean)
   }, [demographics, decodedScodes])
 
+  // Practice session scaled predictions for the dotted overlay (TR-05: not S-codes)
+  const practicePredictions = useMemo(() => {
+    if (!demographics) return []
+    const sessions = getPracticeSessions()
+    return sessions.flatMap(session => {
+      try {
+        if (session.type === 'pi_workout' && session.scaled?.predictedFullValue != null) {
+          // PI workout: single exercise prediction, score it against the bracket
+          const age = calculateAge(demographics.dob, session.date)
+          const ageBracket = getAgeBracket(age)
+          const gender = demographics.gender
+          const fullEx = session.scaled.fullExercise
+          const val = session.scaled.predictedFullValue
+          if (!fullEx || val == null) return []
+          const compType = [EXERCISES.PUSHUPS, EXERCISES.HRPU].includes(fullEx) ? COMPONENTS.STRENGTH
+            : [EXERCISES.SITUPS, EXERCISES.CLRC, EXERCISES.PLANK].includes(fullEx) ? COMPONENTS.CORE
+              : fullEx === EXERCISES.RUN_2MILE ? COMPONENTS.CARDIO
+                : fullEx === EXERCISES.HAMR ? COMPONENTS.CARDIO
+                  : null
+          if (!compType) return []
+          const result = calculateComponentScore(
+            { type: compType, exercise: fullEx, value: val, exempt: false },
+            gender, ageBracket
+          )
+          if (!result?.tested) return []
+          // Partial prediction: show as single component points value only (no composite without all 4)
+          return [{ date: session.date, predictedComposite: null, componentPct: result.percentage, componentType: compType }]
+        }
+
+        if (session.type === 'fractional_test' && session.components) {
+          const age = calculateAge(demographics.dob, session.date)
+          const ageBracket = getAgeBracket(age)
+          const gender = demographics.gender
+          const comps = []
+
+          if (session.components.cardio?.scaled?.predictedFullValue != null) {
+            const r = calculateComponentScore(
+              { type: COMPONENTS.CARDIO, exercise: session.components.cardio.exercise, value: session.components.cardio.scaled.predictedFullValue, exempt: false },
+              gender, ageBracket
+            )
+            if (r?.tested) comps.push({ ...r, type: COMPONENTS.CARDIO })
+          }
+          if (session.components.strength?.scaled?.predictedFullValue != null) {
+            const r = calculateComponentScore(
+              { type: COMPONENTS.STRENGTH, exercise: session.components.strength.exercise, value: session.components.strength.scaled.predictedFullValue, exempt: false },
+              gender, ageBracket
+            )
+            if (r?.tested) comps.push({ ...r, type: COMPONENTS.STRENGTH })
+          }
+          if (session.components.core?.scaled?.predictedFullValue != null) {
+            const r = calculateComponentScore(
+              { type: COMPONENTS.CORE, exercise: session.components.core.exercise, value: session.components.core.scaled.predictedFullValue, exempt: false },
+              gender, ageBracket
+            )
+            if (r?.tested) comps.push({ ...r, type: COMPONENTS.CORE })
+          }
+
+          if (comps.length < 2) return []
+          const comp = calculateCompositeScore(comps)
+          if (!comp || comp.composite == null) return []
+          return [{ date: session.date, predictedComposite: comp.composite }]
+        }
+        return []
+      } catch {
+        return []
+      }
+    }).filter(p => p.predictedComposite != null)
+  }, [demographics])
+
   // Current component percentages from most recent S-code (for gap bar "current" marker)
   const currentPcts = useMemo(() => {
     if (!demographics || decodedScodes.length === 0) return {}
@@ -1030,6 +1145,7 @@ export default function ProjectTab() {
               historicalScores={historicalScores}
               projectedComposite={composite?.projected ?? null}
               targetDate={targetPfaDate}
+              practicePredictions={practicePredictions}
             />
           )}
 

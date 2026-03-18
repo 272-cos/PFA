@@ -18,8 +18,9 @@ import { useApp } from '../../context/AppContext.jsx'
 import { decodeSCode, isValidSCode } from '../../utils/codec/scode.js'
 import { EXERCISES, COMPONENTS, calculateAge, getAgeBracket } from '../../utils/scoring/constants.js'
 import { calculateComponentScore, calculateCompositeScore, calculateWHtR, formatTime } from '../../utils/scoring/scoringEngine.js'
-import { getOutliers, toggleOutlier, saveDraft } from '../../utils/storage/localStorage.js'
+import { getOutliers, toggleOutlier, saveDraft, getPracticeSessions, removePracticeSession } from '../../utils/storage/localStorage.js'
 import ShareModal from '../shared/ShareModal.jsx'
+import { PI_EXERCISE_LABELS, formatSecondsMMSS } from '../../utils/training/practiceSession.js'
 
 const BASE_URL = import.meta.env.BASE_URL
 
@@ -94,6 +95,7 @@ export default function HistoryTab() {
   const [exportSuccess, setExportSuccess] = useState('')
   const [undoDelete, setUndoDelete] = useState(null) // { code, timer }
   const [shareState, setShareState] = useState(null) // { url, title } for ShareModal
+  const [practiceSessions, setPracticeSessions] = useState(() => getPracticeSessions())
 
   // Edit: convert decoded S-code to draft and navigate to Self-Check
   const handleEditAssessment = (decoded) => {
@@ -613,6 +615,134 @@ export default function HistoryTab() {
           ))}
         </div>
       )}
+
+      {/* Practice Sessions - gray border, visually distinct from S-codes (TR-05) */}
+      {practiceSessions.length > 0 && (
+        <div>
+          <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">
+            Practice Sessions ({practiceSessions.length})
+          </h3>
+          <div className="space-y-3">
+            {[...practiceSessions].reverse().map((session) => (
+              <PracticeSessionCard
+                key={session.id}
+                session={session}
+                onRemove={() => {
+                  removePracticeSession(session.id)
+                  setPracticeSessions(getPracticeSessions())
+                }}
+              />
+            ))}
+          </div>
+          <p className="text-xs text-gray-400 mt-3">
+            Practice sessions are not assessment codes and do not appear in reports.
+            They contribute scaled estimates to the Trajectory projection.
+          </p>
+        </div>
+      )}
+    </div>
+  )
+}
+
+// Practice session card - gray border to distinguish from S-code assessment cards
+function PracticeSessionCard({ session, onRemove }) {
+  const [confirmRemove, setConfirmRemove] = useState(false)
+  const dateStr = new Date(session.date).toLocaleDateString()
+
+  const renderContent = () => {
+    if (session.type === 'pi_workout') {
+      const label = PI_EXERCISE_LABELS[session.piExercise] || session.piExercise
+      const rawDisplay = session.scaled
+        ? (session.piExercise.includes('run') || session.piExercise === 'plank_half')
+          ? formatSecondsMMSS(session.piValue)
+          : `${session.piValue} reps`
+        : '-'
+      return (
+        <div>
+          <p className="text-sm text-gray-700">
+            <span className="font-medium">{label}:</span> {rawDisplay}
+          </p>
+          {/* TR-03: labeled "Estimated" */}
+          {session.scaled && (
+            <p className="text-xs text-indigo-700 mt-0.5">
+              Estimated: {session.scaled.displayText}
+            </p>
+          )}
+        </div>
+      )
+    }
+
+    if (session.type === 'fractional_test') {
+      const pct = Math.round(session.fraction * 100)
+      return (
+        <div>
+          {/* TR-04: labeled with fraction used */}
+          <p className="text-sm font-medium text-gray-700">{pct}% Fractional Test</p>
+          <div className="mt-1 space-y-0.5">
+            {session.components?.cardio && (
+              <p className="text-xs text-gray-600">
+                Cardio: {session.components.cardio.value} {'->'}{' '}
+                <span className="text-indigo-700">{session.components.cardio.scaled?.displayText}</span>
+              </p>
+            )}
+            {session.components?.strength && (
+              <p className="text-xs text-gray-600">
+                Strength: {session.components.strength.value} reps {'->'}{' '}
+                <span className="text-indigo-700">{session.components.strength.scaled?.displayText}</span>
+              </p>
+            )}
+            {session.components?.core && (
+              <p className="text-xs text-gray-600">
+                Core: {session.components.core.value} {'->'}{' '}
+                <span className="text-indigo-700">{session.components.core.scaled?.displayText}</span>
+              </p>
+            )}
+          </div>
+        </div>
+      )
+    }
+
+    return <p className="text-sm text-gray-600">Practice session</p>
+  }
+
+  return (
+    <div className="bg-white rounded-lg border-2 border-gray-300 border-dashed p-4">
+      <div className="flex items-start justify-between gap-2">
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2 mb-2">
+            <p className="text-sm font-medium text-gray-700">{dateStr}</p>
+            <span className="inline-block px-1.5 py-0.5 text-xs rounded bg-gray-100 text-gray-500 font-medium">
+              Practice
+            </span>
+          </div>
+          {renderContent()}
+        </div>
+        <div>
+          {confirmRemove ? (
+            <div className="flex items-center gap-1">
+              <button
+                onClick={() => { onRemove(); setConfirmRemove(false) }}
+                className="px-2 py-1 text-xs bg-red-600 text-white rounded"
+              >
+                Remove
+              </button>
+              <button
+                onClick={() => setConfirmRemove(false)}
+                className="px-2 py-1 text-xs bg-gray-200 text-gray-700 rounded"
+              >
+                Cancel
+              </button>
+            </div>
+          ) : (
+            <button
+              onClick={() => setConfirmRemove(true)}
+              className="text-xs text-gray-400 hover:text-red-500 transition-colors"
+            >
+              Remove
+            </button>
+          )}
+        </div>
+      </div>
     </div>
   )
 }

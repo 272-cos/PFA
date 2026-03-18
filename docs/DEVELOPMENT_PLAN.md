@@ -656,28 +656,28 @@ For users who cannot complete even the 50% fractional test, an optional Phase 0 
 
 **Implementation approach:**
 
-- [ ] Add "Practice Check" toggle at top of Self-Check tab (defaults to off = normal self-check behavior)
-- [ ] In Practice mode: replace "Max effort" framing with "Prescribed reps / time target" inputs
-- [ ] Add "Practice type" selector: PI Workout (30-sec benchmarks) | Fractional Test (50% / 75%)
-- [ ] PI Workout path:
+- [x] Add "Practice Check" toggle at top of Self-Check tab (defaults to off = normal self-check behavior)
+- [x] In Practice mode: replace "Max effort" framing with "Prescribed reps / time target" inputs
+- [x] Add "Practice type" selector: PI Workout (30-sec benchmarks) | Fractional Test (50% / 75%)
+- [x] PI Workout path:
   - Push-ups: 30-second max rep entry
   - Sit-ups: 30-second max rep entry
   - Run: 1-mile or 400m time entry
   - App scales result to predicted full-test value using PI scaling rules (see Three-Layer Model table above)
   - Display: "Predicted 1-min max: ~42 push-ups (based on 21 in 30s)" with confidence note
-- [ ] Fractional Test path:
+- [x] Fractional Test path:
   - User selects 50% or 75% fraction
   - App pre-fills the rep/time targets (e.g., half the passing standard for user's bracket)
   - User records actual reps achieved
   - App scales result to full-test equivalent
   - Display: "Equivalent full-test score: ~68 pts" with disclaimer
-- [ ] Practice results stored separately from S-codes (localStorage key: `pfa_practice_sessions`)
-- [ ] Practice results NOT encoded into S-codes (avoid polluting the scoring history)
-- [ ] Practice results displayed in History tab with distinct visual treatment (gray border vs. blue for S-codes)
-- [ ] Practice results feed into the Projection tab as additional data points (dotted line overlay, labeled "Scaled practice data")
-- [ ] Mock Test mode: when target PFA date is 12-16 days away, app displays a banner: "You are in the mock test window. Consider running your full mock test now - one time only."
-- [ ] Post-mock-test prompt: after a full S-code is recorded at -14 to -10 days out, app displays: "Mock test recorded. Your job now is to taper. Reduce training volume by 50% and avoid hard efforts until test day."
-- [ ] Unit tests: scaling calculations for all PI Workout types; fractional test projection math; mock test window detection logic
+- [x] Practice results stored separately from S-codes (localStorage key: `pfa_practice_sessions`)
+- [x] Practice results NOT encoded into S-codes (avoid polluting the scoring history)
+- [x] Practice results displayed in History tab with distinct visual treatment (gray border vs. blue for S-codes)
+- [x] Practice results feed into the Projection tab as additional data points (dotted line overlay, labeled "Scaled practice data")
+- [x] Mock Test mode: when target PFA date is 12-16 days away, app displays a banner: "You are in the mock test window. Consider running your full mock test now - one time only."
+- [x] Post-mock-test prompt: after a full S-code is recorded at -14 to -10 days out, app displays: "Mock test recorded. Your job now is to taper. Reduce training volume by 50% and avoid hard efforts until test day."
+- [x] Unit tests: scaling calculations for all PI Workout types; fractional test projection math; mock test window detection logic
 
 **New utility file:** `src/utils/training/practiceSession.js`
 - `scalePIWorkout(exercise, value)` - applies scaling rule to PI result, returns predicted full-test value
@@ -688,15 +688,15 @@ For users who cannot complete even the 50% fractional test, an optional Phase 0 
 **New localStorage key:** `pfa_practice_sessions` - array of practice session objects, never encoded
 
 **Acceptance:**
-- Practice mode toggle switches Self-Check to PI/fractional entry without breaking normal mode
-- 30-sec push-up entry of 20 reps displays "Predicted 1-min max: ~40 reps"
-- 1-mile time of 8:30 displays "Predicted 2-mile: ~17:45"
-- Fractional test entry at 50% shows predicted full-test composite
-- History tab shows practice sessions visually distinct from S-codes
-- Projection tab dotted overlay renders from scaled practice data
-- Mock test window banner appears correctly when 10-16 days out
-- Post-mock-test prompt fires after full S-code recorded in window
-- `npm test` passes
+- [x] Practice mode toggle switches Self-Check to PI/fractional entry without breaking normal mode
+- [x] 30-sec push-up entry of 20 reps displays "Predicted 1-min max: ~40 reps"
+- [x] 1-mile time of 8:30 displays "Predicted 2-mile: ~17:45"
+- [x] Fractional test entry at 50% shows predicted full-test composite
+- [x] History tab shows practice sessions visually distinct from S-codes
+- [x] Projection tab dotted overlay renders from scaled practice data
+- [x] Mock test window banner appears correctly when 10-16 days out
+- [x] Post-mock-test prompt fires after full S-code recorded in window
+- [x] `npm test` passes - 476 tests, 0 failures (48 new tests in practiceSession.test.js)
 
 ---
 
@@ -820,7 +820,7 @@ The following rules must be encoded into the implementation. They are not edge c
 
 | Task | Status | Prerequisite | Key Deliverable |
 |---|---|---|---|
-| 10.1 - Practice Mode (Option C) | Not started | None | Practice check entry, PI scaling, fractional test, mock test prompts |
+| 10.1 - Practice Mode (Option C) | COMPLETE | None | Practice check entry, PI scaling, fractional test, mock test prompts, 48 unit tests |
 | 10.3 - Trajectory Overlays (Option B) | OPTIONAL - not scheduled | 10.1 verified; visual evaluation pass | Milestone overlays on projection chart; default-OFF toggle |
 | 10.2 - Training Plan Calendar Tab (Option A) | Not started | 10.1 verified | Full periodized calendar tab |
 
@@ -869,4 +869,4 @@ UI component tests via React Testing Library for critical flows (Self-Check live
 | 7 | 7.1, 7.2, 7.3 | ✅ Complete | PWA + accessibility + chart update banner |
 | 8 | 8.1, 8.2, 8.3, 8.4 | 🔄 In Progress | 8.1 complete (effort-weighted strategy engine); 8.2 complete (stopwatch); 8.3 complete (HAMR metronome); 8.4 pending (exercise comparison) |
 | 9 | 9.1, 9.2 | ✅ Complete | 9.1 complete (curated training resource links); 9.2 complete (personalized training plans) |
-| 10 | 10.1, 10.3 (opt), 10.2 | Not started | Practice Mode (Option C) -> Trajectory overlays (Option B, optional eval) -> Training Plan tab (Option A) |
+| 10 | 10.1, 10.3 (opt), 10.2 | 10.1 Complete | Practice Mode (Option C) complete; 10.3 (Option B) optional eval; 10.2 (Option A) not started |
