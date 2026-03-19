@@ -488,22 +488,22 @@ function getTrainingDayDescription(phase, sessionIndex) {
     [PHASES.PHASE_1]: [
       'Cardio base: 20-30 min conversational-pace run/walk',
       'Strength + Core: 3x max push-ups, 3x max sit-ups with 90s rest',
-      'Cardio variation: 20 min sustained run or long walk intervals',
+      'Cardio variation: 20 min easy run, or 8x2-min run/walk intervals with 1-min walk rest',
     ],
     [PHASES.PHASE_2]: [
       'Cardio build: 30 min with 2x5-min goal-pace inserts',
       'Strength + Core: 4x max push-ups, 4x max sit-ups; reduce rest to 60s',
-      'Cardio endurance: 30-35 min sustained, slightly faster than Phase 1',
+      'Cardio endurance: 30-35 min sustained at a pace you could hold a short conversation',
     ],
     [PHASES.PHASE_3]: [
       'Cardio intensity: Tempo run 20 min @ 80% max heart rate',
-      'Strength + Core: 4x max push-ups, max sit-ups; 45s rest (race simulation)',
+      'Strength + Core: 4x max push-ups, 4x max sit-ups; 45s rest (race simulation)',
       'Cardio speed: 6x400m @ faster than goal pace, 2 min rest between',
     ],
     [PHASES.PHASE_4]: [
       'Cardio maintenance: 20 min easy run - no hard efforts',
-      'Strength + Core: 2x moderate push-ups and sit-ups - feel sharp, not spent',
-      'Movement prep: Light jog, dynamic stretching, no intensity',
+      'Strength + Core: 2x10 push-ups, 2x10 sit-ups - feel sharp, not spent',
+      'Movement prep: Light jog, dynamic stretching, no hard efforts',
     ],
   }
 
