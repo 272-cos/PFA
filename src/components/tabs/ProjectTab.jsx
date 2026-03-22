@@ -723,7 +723,7 @@ function WeeklyTrainingPlan({ plan }) {
 // ─── Main Tab ──────────────────────────────────────────────────────────────────
 
 export default function ProjectTab() {
-  const { scodes, demographics, targetPfaDate, updateTargetPfaDate, personalGoal, updatePersonalGoal } = useApp()
+  const { scodes, demographics, targetPfaDate, updateTargetPfaDate, personalGoal, updatePersonalGoal, setActiveTab } = useApp()
   const [targetDateInput, setTargetDateInput] = useState('')
   const [targetDateError, setTargetDateError] = useState('')
   const [showMilestones, setShowMilestonesState] = useState(() => getShowMilestones())
@@ -1112,23 +1112,48 @@ export default function ProjectTab() {
 
   // ── Blocked states ────────────────────────────────────────────────────────────
 
-  if (!demographics) {
+  // Soft nudge instead of hard gate - show what the tab does, guide toward setup
+  if (!demographics || !scodes || scodes.length === 0) {
+    const needsProfile = !demographics
+    const needsScodes = !scodes || scodes.length === 0
     return (
-      <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6">
-        <h3 className="text-lg font-bold text-yellow-900 mb-2">Profile Required</h3>
-        <p className="text-yellow-800">Create your profile in the <strong>Profile tab</strong> first.</p>
-      </div>
-    )
-  }
-
-  // GR-05: blocked until 1+ S-codes
-  if (!scodes || scodes.length === 0) {
-    return (
-      <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
-        <h3 className="text-lg font-bold text-blue-900 mb-2">No Self-Checks Yet</h3>
-        <p className="text-blue-800">
-          Complete at least one self-check to enable readiness projection.
-        </p>
+      <div
+        role="tabpanel"
+        id="project-panel"
+        aria-labelledby="project-tab"
+        className="space-y-4"
+      >
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+          <h3 className="text-lg font-bold text-gray-900 mb-2">Readiness Projection</h3>
+          <p className="text-sm text-gray-600 mb-4">
+            This tab projects your trajectory to your target PFA date using your self-check history.
+            It shows per-component gap bars, weekly improvement targets, and a composite projection chart.
+          </p>
+          <div className="space-y-2">
+            {needsProfile && (
+              <div className="flex items-center gap-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                <span className="text-blue-500 font-bold text-sm flex-shrink-0">1</span>
+                <p className="text-sm text-blue-800 flex-1">
+                  <button type="button" onClick={() => setActiveTab('profile')} className="underline font-medium text-blue-700 hover:text-blue-900">
+                    Set up your profile
+                  </button>
+                  {' '}- DOB and gender (10 seconds)
+                </p>
+              </div>
+            )}
+            {needsScodes && (
+              <div className="flex items-center gap-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                <span className="text-blue-500 font-bold text-sm flex-shrink-0">{needsProfile ? '2' : '1'}</span>
+                <p className="text-sm text-blue-800 flex-1">
+                  <button type="button" onClick={() => setActiveTab('selfcheck')} className="underline font-medium text-blue-700 hover:text-blue-900">
+                    Complete a self-check
+                  </button>
+                  {' '}- enter your exercise results
+                </p>
+              </div>
+            )}
+          </div>
+        </div>
       </div>
     )
   }

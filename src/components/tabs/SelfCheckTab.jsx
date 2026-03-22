@@ -41,7 +41,7 @@ function formatTimeInput(rawValue) {
 }
 
 export default function SelfCheckTab() {
-  const { demographics, addSCode, removeSCode, dcode, setSelfCheckDirty, registerSelfCheckGenerator, targetPfaDate, scodes } = useApp()
+  const { demographics, addSCode, removeSCode, dcode, setSelfCheckDirty, registerSelfCheckGenerator, targetPfaDate, scodes, setActiveTab } = useApp()
 
   // IV-01: Assessment date - picker with max = today (local date, not UTC)
   const _now = new Date()
@@ -180,17 +180,22 @@ export default function SelfCheckTab() {
   // Check if we have demographics
   const hasDemographics = demographics && demographics.dob && demographics.gender
 
+  // Default bracket for exploration mode (25-29 Male - middle of the road)
+  const DEFAULT_GENDER = 'male'
+  const DEFAULT_AGE_BRACKET = '25_29'
+
   // Calculate scores whenever inputs change
   useEffect(() => {
-    if (!hasDemographics || !assessmentDate) {
+    if (!assessmentDate) {
       setScores(null)
       return
     }
 
     try {
-      const age = calculateAge(demographics.dob, assessmentDate)
-      const ageBracket = getAgeBracket(age)
-      const gender = demographics.gender
+      const gender = hasDemographics ? demographics.gender : DEFAULT_GENDER
+      const ageBracket = hasDemographics
+        ? getAgeBracket(calculateAge(demographics.dob, assessmentDate))
+        : DEFAULT_AGE_BRACKET
 
       const components = []
 
@@ -338,7 +343,7 @@ export default function SelfCheckTab() {
     setSuccess('')
 
     if (!hasDemographics) {
-      setError('Please create your profile first (Profile tab)')
+      setError('Profile needed to save. Set your DOB and gender in the Profile tab - takes 10 seconds.')
       return false
     }
 
@@ -473,7 +478,13 @@ export default function SelfCheckTab() {
       })
       clearDraft()
       setSelfCheckDirty(false)
-      setSuccess('Assessment code generated successfully!')
+      // First-save celebration with backup hint
+      const isFirstSave = scodes.length === 0
+      if (isFirstSave) {
+        setSuccess('First assessment saved! Your data lives on this device only - back up anytime from the Tools tab.')
+      } else {
+        setSuccess('Assessment saved!')
+      }
       return true
     } catch {
       setError('Could not generate assessment code. Check your inputs and try again.')
@@ -552,17 +563,6 @@ export default function SelfCheckTab() {
     setSelfCheckDirty(true)
   }
 
-  if (!hasDemographics) {
-    return (
-      <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6">
-        <h3 className="text-lg font-bold text-yellow-900 mb-2">Profile Required</h3>
-        <p className="text-yellow-800 mb-4">
-          Please create your profile first (DOB + gender) in the <strong>Profile tab</strong> before recording assessments.
-        </p>
-      </div>
-    )
-  }
-
   const isDiagnostic = isDiagnosticPeriod(assessmentDate)
 
   // Mock test / taper window detection (TR-01, TR-02, TR-09, TR-10)
@@ -616,6 +616,26 @@ export default function SelfCheckTab() {
           <p className="text-sm text-blue-800">
             <span className="font-bold">Taper period:</span> Your PFA is within 2 weeks. Reduce training volume by 50% and avoid hard efforts until test day.
           </p>
+        </div>
+      )}
+
+      {/* Exploration mode hint - profile not yet set */}
+      {!hasDemographics && (
+        <div className="flex items-center gap-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+          <span className="text-blue-600 text-lg flex-shrink-0" aria-hidden="true">i</span>
+          <div className="flex-1">
+            <p className="text-sm text-blue-800">
+              Scores shown use a default bracket (25-29 Male).{' '}
+              <button
+                type="button"
+                onClick={() => setActiveTab('profile')}
+                className="underline font-medium text-blue-700 hover:text-blue-900"
+              >
+                Set up your profile
+              </button>
+              {' '}for personalized scoring.
+            </p>
+          </div>
         </div>
       )}
 
@@ -692,6 +712,12 @@ export default function SelfCheckTab() {
                 <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-bold ${scores.composite.pass ? 'bg-green-600 text-white' : 'bg-red-600 text-white'}`}>
                   {scores.composite.pass ? 'PASS' : 'FAIL'}
                 </span>
+                {/* Approximate score indicator when using default bracket */}
+                {!hasDemographics && (
+                  <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-600 border border-gray-300">
+                    Approximate
+                  </span>
+                )}
                 {/* UX-10: Diagnostic period badge */}
                 {isDiagnostic && (
                   <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-bold bg-blue-100 text-blue-800 border border-blue-300">
@@ -750,8 +776,8 @@ export default function SelfCheckTab() {
             />
             {/* UX-10: Diagnostic period badge inline with date */}
             {isDiagnostic && (
-              <span id="diag-badge" className="inline-flex items-center px-2 py-1 rounded text-xs font-bold bg-blue-100 text-blue-800 border border-blue-300">
-                Diagnostic Period - non-scored
+              <span id="diag-badge" className="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-blue-50 text-blue-700 border border-blue-200">
+                Familiarization period - practice only
               </span>
             )}
           </div>
@@ -1074,6 +1100,15 @@ export default function SelfCheckTab() {
             Clear
           </button>
         </div>
+        {!hasDemographics && (
+          <p className="text-xs text-gray-500 mt-2 text-center">
+            Saving requires a profile.{' '}
+            <button type="button" onClick={() => setActiveTab('profile')} className="underline text-blue-600 hover:text-blue-800">
+              Set up profile
+            </button>
+            {' '}- takes 10 seconds.
+          </p>
+        )}
 
         {/* Success/Error Messages */}
         {success && (
