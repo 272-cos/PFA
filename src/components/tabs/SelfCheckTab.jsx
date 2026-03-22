@@ -10,8 +10,9 @@ import { calculateAge, getAgeBracket, isDiagnosticPeriod, getWalkTimeLimit } fro
 import { calculateComponentScore, calculateCompositeScore, calculateWHtR, parseTime, formatTime, isTimeIncomplete, hamrTimeToShuttles } from '../../utils/scoring/scoringEngine.js'
 import { EXERCISE_NAMES } from '../../utils/scoring/strategyEngine.js'
 import ExerciseComparison from './ExerciseComparison.jsx'
-import { getExercisePrefs, saveExercisePrefs, saveDraft, loadDraft, clearDraft, savePracticeSession, getPracticeSessions } from '../../utils/storage/localStorage.js'
+import { getExercisePrefs, saveExercisePrefs, saveDraft, loadDraft, clearDraft, savePracticeSession, getPracticeSessions, getSelectedBase, saveSelectedBase } from '../../utils/storage/localStorage.js'
 import { getTrainingResources } from '../../utils/training/resources.js'
+import { BASE_REGISTRY } from '../../utils/codec/bitpack.js'
 import ShareModal from '../shared/ShareModal.jsx'
 import {
   PI_EXERCISES, PI_EXERCISE_LABELS, PI_IS_TIME, PI_TO_FULL_EXERCISE,
@@ -73,6 +74,9 @@ export default function SelfCheckTab() {
   const [bodyCompExempt, setBodyCompExempt] = useState(false)
   const [heightError, setHeightError] = useState('')
   const [waistError, setWaistError] = useState('')
+
+  // Altitude base selection (persisted)
+  const [selectedBase, setSelectedBase] = useState(() => getSelectedBase())
 
   // Exercise preferences (locked choices persisted to localStorage)
   const [exercisePrefs, setExercisePrefs] = useState(() => getExercisePrefs())
@@ -445,12 +449,12 @@ export default function SelfCheckTab() {
           exempt: false
         } : bodyCompExempt ? { heightInches: null, waistInches: null, exempt: true } : null,
         feedback: {
-          baseId: 0,
+          baseId: selectedBase,
           rpe: 3,
           sleepQuality: 2,
           nutrition: 2,
           injured: false,
-          environmentFlags: 0,
+          environmentFlags: selectedBase > 0 ? 0b010000 : 0, // ALTITUDE_NOTABLE when base selected
           confidence: 3,
         },
       }
@@ -982,6 +986,33 @@ export default function SelfCheckTab() {
           )}
           <TrainingResources component={COMPONENTS.BODY_COMP} />
         </ComponentSection>
+
+        {/* Altitude base selection */}
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            High-Altitude Base (optional)
+          </label>
+          <select
+            value={selectedBase}
+            onChange={(e) => {
+              const val = Number(e.target.value)
+              setSelectedBase(val)
+              saveSelectedBase(val)
+            }}
+            className="w-full px-3 py-2 min-h-[44px] border border-gray-300 rounded-lg bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            aria-label="Select high-altitude base"
+          >
+            <option value={0}>None - not at a high-altitude base</option>
+            {BASE_REGISTRY.filter(Boolean).map(b => (
+              <option key={b.id} value={b.id}>
+                {b.name} ({b.state}) - {b.elevationFt.toLocaleString()} ft
+              </option>
+            ))}
+          </select>
+          <p className="text-xs text-gray-400 mt-1">
+            CO, WY, and NM bases above 5,000 ft. Recorded in your assessment code for context.
+          </p>
+        </div>
 
         {/* IV-10: All-exempt warning */}
         {allExempt && (
