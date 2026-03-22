@@ -408,6 +408,32 @@ export function toggleCompletedDay(dateISO) {
   }
 }
 
+// ── Milestone overlay toggle ─────────────────────────────────────────────────
+
+const SHOW_MILESTONES_KEY = 'pfa_show_milestones'
+
+/**
+ * Get the milestone overlay preference (defaults OFF).
+ * @returns {boolean}
+ */
+export function getShowMilestones() {
+  try {
+    return localStorage.getItem(SHOW_MILESTONES_KEY) === 'true'
+  } catch {
+    return false
+  }
+}
+
+/**
+ * Set the milestone overlay preference.
+ * @param {boolean} show
+ */
+export function setShowMilestones(show) {
+  try {
+    localStorage.setItem(SHOW_MILESTONES_KEY, show ? 'true' : 'false')
+  } catch { /* ignore */ }
+}
+
 /**
  * Toggle outlier flag for an S-code
  * @param {string} scode - S-code string to toggle
