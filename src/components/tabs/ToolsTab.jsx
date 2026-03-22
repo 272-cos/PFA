@@ -299,10 +299,12 @@ export default function ToolsTab() {
       aria-labelledby="tools-tab"
       className="space-y-4"
     >
-      <ScoreTargetLookup />
-      <HamrMetronome />
-      <Stopwatch />
-      <BackupRestore />
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <ScoreTargetLookup />
+        <HamrMetronome />
+        <Stopwatch />
+        <BackupRestore />
+      </div>
     </div>
   )
 }

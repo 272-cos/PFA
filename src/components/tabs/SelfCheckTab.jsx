@@ -783,6 +783,8 @@ export default function SelfCheckTab() {
           </div>
         </div>
 
+        {/* Exercise Components - 2-col on md+ */}
+        <div className="grid grid-cols-1 md:grid-cols-2 md:gap-6">
         {/* Cardio Component */}
         <ComponentSection
           title="Cardio (50 pts)"
@@ -1012,6 +1014,7 @@ export default function SelfCheckTab() {
           )}
           <TrainingResources component={COMPONENTS.BODY_COMP} />
         </ComponentSection>
+        </div>{/* close exercise components grid */}
 
         {/* Altitude base selection */}
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">

@@ -1163,6 +1163,8 @@ export default function ProjectTab() {
   return (
     <div className="space-y-4">
 
+      {/* ── Target + Goal row ─────────────────────────────────────────────── */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
       {/* ── Target PFA Date ────────────────────────────────────────────────── */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
         <label className="block text-sm font-semibold text-gray-700 mb-1">
@@ -1224,6 +1226,7 @@ export default function ProjectTab() {
           }
         </p>
       </div>
+      </div>{/* close target + goal grid */}
 
       {/* ── No target date placeholder ────────────────────────────────────── */}
       {!targetPfaDate && (
