@@ -42,7 +42,7 @@ export function AppProvider({ children }) {
   const [showOnboarding, setShowOnboarding] = useState(false)
 
   // Dark mode
-  const [darkMode, setDarkModeState] = useState(false)
+  const [darkMode, setDarkModeState] = useState(true)
 
   // Personal score goal (default 75.0)
   const [personalGoal, setPersonalGoalState] = useState(75.0)
@@ -191,8 +191,7 @@ export function AppProvider({ children }) {
     if (hasStoredPref) {
       setDarkModeState(storedDark)
     } else {
-      const systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches
-      setDarkModeState(systemDark)
+      setDarkModeState(true)
     }
 
     // Load personal goal

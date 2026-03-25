@@ -63,7 +63,7 @@ function AppContent() {
   }
 
   return (
-    <div className={`min-h-screen bg-gray-100 flex flex-col${darkMode ? ' dark' : ''}`}>
+    <div className={`min-h-screen flex flex-col${darkMode ? ' dark bg-[#0a1628]' : ' bg-gray-100'}`}>
       <OfflineBanner />
       <Header />
       <ChartUpdateBanner />
