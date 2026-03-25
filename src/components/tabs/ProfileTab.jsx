@@ -187,8 +187,7 @@ export default function ProfileTab() {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+    <div className="space-y-6 max-w-xl mx-auto">
       <div className="bg-white rounded-lg shadow-md p-6">
         <h2 className="text-2xl font-bold text-gray-900 mb-4">Profile</h2>
 
@@ -316,39 +315,30 @@ export default function ProfileTab() {
               </p>
             </div>
           )}
-        </div>
-      </div>
-
-      {/* Paste D-Code Section */}
-      <div className="bg-white rounded-lg shadow-md p-6">
-        <h3 className="text-lg font-bold text-gray-900 mb-4">Load Existing Profile</h3>
-
-        <div className="space-y-4">
-          <div>
-            <label htmlFor="paste-dcode" className="block text-sm font-medium text-gray-700 mb-2">
-              Paste Profile Code
-            </label>
-            <input
-              id="paste-dcode"
-              type="text"
-              value={pasteCode}
-              onChange={(e) => setPasteCode(e.target.value)}
-              placeholder="D1-abc123..."
-              aria-label="Paste your existing profile code here"
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent font-mono"
-            />
+          {/* Load Existing Profile */}
+          <div className="border-t border-gray-200 pt-6">
+            <h3 className="text-sm font-semibold text-gray-700 mb-3">Load Existing Profile</h3>
+            <div className="space-y-3">
+              <input
+                id="paste-dcode"
+                type="text"
+                value={pasteCode}
+                onChange={(e) => setPasteCode(e.target.value)}
+                placeholder="D1-abc123..."
+                aria-label="Paste your existing profile code here"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent font-mono"
+              />
+              <button
+                onClick={handlePasteCode}
+                disabled={!pasteCode.trim()}
+                className="w-full bg-gray-600 hover:bg-gray-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-medium py-3 px-4 rounded-lg transition-colors"
+              >
+                Load Profile
+              </button>
+            </div>
           </div>
-
-          <button
-            onClick={handlePasteCode}
-            disabled={!pasteCode.trim()}
-            className="w-full bg-gray-600 hover:bg-gray-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-medium py-3 px-4 rounded-lg transition-colors"
-          >
-            Load Profile
-          </button>
         </div>
       </div>
-      </div>{/* close grid */}
 
       {/* Reference link */}
       <div className="text-center">
