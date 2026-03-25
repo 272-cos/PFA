@@ -4,14 +4,14 @@
 
 import { useState, useMemo } from 'react'
 import { useApp } from '../../context/AppContext.jsx'
-import { BADGES, TIER, evaluateAchievements } from '../../utils/achievements/achievements.js'
+import { BADGES, TIER, evaluateMilestones } from '../../utils/achievements/achievements.js'
 
 const TIER_ORDER = [TIER.GOLD, TIER.SILVER, TIER.BRONZE]
 
 const TIER_STYLES = {
-  [TIER.GOLD]: { bg: 'bg-yellow-50', border: 'border-yellow-400', text: 'text-yellow-700', icon: 'text-yellow-500', label: 'Gold' },
-  [TIER.SILVER]: { bg: 'bg-gray-50', border: 'border-gray-400', text: 'text-gray-700', icon: 'text-gray-400', label: 'Silver' },
-  [TIER.BRONZE]: { bg: 'bg-orange-50', border: 'border-orange-400', text: 'text-orange-700', icon: 'text-orange-400', label: 'Bronze' },
+  [TIER.GOLD]: { bg: 'bg-yellow-50', border: 'border-yellow-400', text: 'text-yellow-700', icon: 'text-yellow-500', label: 'Advanced' },
+  [TIER.SILVER]: { bg: 'bg-gray-50', border: 'border-gray-400', text: 'text-gray-700', icon: 'text-gray-400', label: 'Steady' },
+  [TIER.BRONZE]: { bg: 'bg-orange-50', border: 'border-orange-400', text: 'text-orange-700', icon: 'text-orange-400', label: 'Starter' },
 }
 
 // Simple inline SVG icons per badge
@@ -98,6 +98,7 @@ function BadgeCard({ badge, earned, onClick }) {
     <button
       type="button"
       onClick={() => onClick(badge)}
+      aria-label={`${badge.name}${earned ? '' : ' (locked)'}`}
       className={`flex flex-col items-center justify-center p-3 rounded-lg border-2 min-h-[44px] transition-all ${
         earned
           ? `${style.bg} ${style.border} ${style.icon}`
@@ -115,7 +116,7 @@ export default function AchievementBadges() {
 
   const earnedIds = useMemo(() => {
     if (!scodes || scodes.length === 0) return []
-    return evaluateAchievements(scodes, demographics)
+    return evaluateMilestones(scodes, demographics)
   }, [scodes, demographics])
 
   const earnedSet = useMemo(() => new Set(earnedIds), [earnedIds])
@@ -123,8 +124,8 @@ export default function AchievementBadges() {
   if (!scodes || scodes.length === 0) {
     return (
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
-        <h3 className="text-sm font-semibold text-gray-700 mb-2">Achievements</h3>
-        <p className="text-sm text-gray-500">Log your first assessment to start earning badges.</p>
+        <h3 className="text-sm font-semibold text-gray-700 mb-2">Milestones</h3>
+        <p className="text-sm text-gray-500">Your milestones will appear here as you log assessments. Every check-in builds the picture.</p>
       </div>
     )
   }
@@ -132,7 +133,7 @@ export default function AchievementBadges() {
   return (
     <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
       <div className="flex items-center justify-between mb-3">
-        <h3 className="text-sm font-semibold text-gray-700">Achievements</h3>
+        <h3 className="text-sm font-semibold text-gray-700">Milestones</h3>
         <span className="text-xs text-gray-500">{earnedIds.length} / {BADGES.length}</span>
       </div>
 
