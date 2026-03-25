@@ -6,6 +6,8 @@ import OnboardingModal from './components/layout/OnboardingModal.jsx'
 import OfflineBanner from './components/layout/OfflineBanner.jsx'
 import InstallPrompt from './components/layout/InstallPrompt.jsx'
 import ChartUpdateBanner from './components/layout/ChartUpdateBanner.jsx'
+import ErrorBoundary from './components/shared/ErrorBoundary.jsx'
+import PfaCountdown from './components/shared/PfaCountdown.jsx'
 
 const ProfileTab = lazy(() => import('./components/tabs/ProfileTab.jsx'))
 const SelfCheckTab = lazy(() => import('./components/tabs/SelfCheckTab.jsx'))
@@ -68,11 +70,14 @@ function AppContent() {
       <Header />
       <ChartUpdateBanner />
       <TabNavigation />
+      <PfaCountdown />
 
       <main className="flex-1 container mx-auto px-4 py-6 max-w-4xl lg:max-w-6xl">
-        <Suspense fallback={<TabSkeleton />}>
-          {renderTabContent()}
-        </Suspense>
+        <div role="tabpanel" id={`${activeTab}-panel`} aria-labelledby={`${activeTab}-tab`}>
+          <Suspense fallback={<TabSkeleton />}>
+            {renderTabContent()}
+          </Suspense>
+        </div>
       </main>
 
       {showOnboarding && <OnboardingModal />}
@@ -83,9 +88,11 @@ function AppContent() {
 
 function App() {
   return (
-    <AppProvider>
-      <AppContent />
-    </AppProvider>
+    <ErrorBoundary>
+      <AppProvider>
+        <AppContent />
+      </AppProvider>
+    </ErrorBoundary>
   )
 }
 

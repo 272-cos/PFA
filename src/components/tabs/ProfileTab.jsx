@@ -7,6 +7,7 @@ import { useApp } from '../../context/AppContext.jsx'
 import { encodeDCode, decodeDCode } from '../../utils/codec/dcode.js'
 import { decodeSCode } from '../../utils/codec/scode.js'
 import { GENDER, calculateAge } from '../../utils/scoring/constants.js'
+import AchievementBadges from '../shared/AchievementBadges.jsx'
 
 export default function ProfileTab() {
   const { dcode, demographics, updateDCode, targetPfaDate, updateTargetPfaDate, scodes } = useApp()
@@ -132,7 +133,10 @@ export default function ProfileTab() {
       const code = encodeDCode({ dob, gender })
       const decoded = decodeDCode(code)
       updateDCode(code, decoded)
-      setSuccess('Profile code generated successfully!')
+      setSuccess(targetDate
+        ? 'Profile saved!'
+        : 'Profile saved! Set your Target PFA Date when you know it to unlock trajectory projections.'
+      )
     } catch {
       setError('Could not generate profile code. Check your date of birth and try again.')
     }
@@ -275,7 +279,7 @@ export default function ProfileTab() {
           {/* Generate Button */}
           <button
             onClick={handleGenerateDCode}
-            disabled={!dob || !targetDate}
+            disabled={!dob}
             className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-medium py-3 px-6 rounded-lg transition-colors"
           >
             Save Profile
@@ -355,6 +359,9 @@ export default function ProfileTab() {
           {' '}(Change 1, 22 Jan 2026)
         </p>
       </div>
+
+      {/* Achievement Badges */}
+      <AchievementBadges />
     </div>
   )
 }

@@ -60,7 +60,7 @@ body {
 .dark .text-gray-700   { color: #cbd5e1 !important; }
 .dark .text-gray-600   { color: #94a3b8 !important; }
 .dark .text-gray-500   { color: #94a3b8 !important; }
-.dark .text-gray-400   { color: #64748b !important; }
+.dark .text-gray-400   { color: #94a3b8 !important; }
 
 /* ── Color text (dark text on light bg -> light text on dark bg) ── */
 .dark .text-green-800  { color: #86efac !important; }
@@ -132,3 +132,13 @@ body {
 /* ── Code / monospace ── */
 .dark code,
 .dark .font-mono   { background-color: #0f172a !important; color: #7dd3fc !important; }
+
+/* ── Reduced motion ─────────────────────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

@@ -8,6 +8,7 @@
 import { useState, useMemo, useRef, useCallback } from 'react'
 import Stopwatch from '../tools/Stopwatch.jsx'
 import HamrMetronome from '../tools/HamrMetronome.jsx'
+import RunPacer from '../tools/RunPacer.jsx'
 import { useApp } from '../../context/AppContext.jsx'
 import { calculateAge, getAgeBracket } from '../../utils/scoring/constants.js'
 import { generateTargetTable } from '../../utils/scoring/reverseScoring.js'
@@ -302,6 +303,7 @@ export default function ToolsTab() {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <ScoreTargetLookup />
         <HamrMetronome />
+        <RunPacer />
         <Stopwatch />
         <BackupRestore />
       </div>

@@ -325,17 +325,16 @@ export function AppProvider({ children }) {
       {pendingTabNavigation !== null && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/40"
-          onClick={() => {
-            setActiveTab(pendingTabNavigation)
-            setPendingTabNavigation(null)
-            setSuppressSelfCheckWarning(true)
-          }}
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="unsaved-warning-title"
+          onClick={() => setPendingTabNavigation(null)}
         >
           <div
             className="bg-white rounded-xl shadow-2xl p-6 max-w-sm mx-4 w-full"
             onClick={(e) => e.stopPropagation()}
           >
-            <h3 className="text-lg font-bold text-gray-900 mb-2">Results not saved</h3>
+            <h3 id="unsaved-warning-title" className="text-lg font-bold text-gray-900 mb-2">Results not saved</h3>
             <p className="text-sm text-gray-600 mb-5">
               Your self-check results have not been saved. Save your assessment before leaving.
             </p>

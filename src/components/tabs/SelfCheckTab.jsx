@@ -5,7 +5,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { useApp } from '../../context/AppContext.jsx'
 import { encodeSCode, decodeSCode } from '../../utils/codec/scode.js'
-import { EXERCISES, COMPONENTS } from '../../utils/scoring/constants.js'
+import { EXERCISES, COMPONENTS, GENDER, AGE_BRACKETS } from '../../utils/scoring/constants.js'
 import { calculateAge, getAgeBracket, isDiagnosticPeriod, getWalkTimeLimit } from '../../utils/scoring/constants.js'
 import { calculateComponentScore, calculateCompositeScore, calculateWHtR, parseTime, formatTime, isTimeIncomplete, hamrTimeToShuttles } from '../../utils/scoring/scoringEngine.js'
 import ExerciseComparison from './ExerciseComparison.jsx'
@@ -44,7 +44,7 @@ export default function SelfCheckTab() {
   // IV-01: Assessment date - picker with max = today (local date, not UTC)
   const _now = new Date()
   const today = `${_now.getFullYear()}-${String(_now.getMonth() + 1).padStart(2, '0')}-${String(_now.getDate()).padStart(2, '0')}`
-  const [assessmentDate, setAssessmentDate] = useState('')
+  const [assessmentDate, setAssessmentDate] = useState(today)
 
   // Cardio
   const [cardioExercise, setCardioExercise] = useState(EXERCISES.RUN_2MILE)
@@ -179,8 +179,8 @@ export default function SelfCheckTab() {
   const hasDemographics = demographics && demographics.dob && demographics.gender
 
   // Default bracket for exploration mode (25-29 Male - middle of the road)
-  const DEFAULT_GENDER = 'male'
-  const DEFAULT_AGE_BRACKET = '25_29'
+  const DEFAULT_GENDER = GENDER.MALE
+  const DEFAULT_AGE_BRACKET = AGE_BRACKETS.AGE_25_29
 
   // Calculate scores whenever inputs change
   useEffect(() => {
