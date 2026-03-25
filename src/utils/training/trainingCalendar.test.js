@@ -57,16 +57,23 @@ describe('detectPhase', () => {
     expect(detectPhase(0)).toBe(PHASES.PHASE_4)
   })
 
-  it('returns Phase 0 when forcePhase0 is true', () => {
+  it('returns Phase 0 when forcePhase0 is true and 13+ weeks out', () => {
     expect(detectPhase(20, { forcePhase0: true })).toBe(PHASES.PHASE_0)
+    expect(detectPhase(13, { forcePhase0: true })).toBe(PHASES.PHASE_0)
+  })
+
+  it('uses normal phase progression when forcePhase0 is true but inside 13 weeks', () => {
+    expect(detectPhase(12, { forcePhase0: true })).toBe(PHASES.PHASE_2)
+    expect(detectPhase(8, { forcePhase0: true })).toBe(PHASES.PHASE_3)
+    expect(detectPhase(4, { forcePhase0: true })).toBe(PHASES.PHASE_4)
   })
 })
 
 // ── shouldUsePhase0 ────────────────────────────────────────────────────────────
 
 describe('shouldUsePhase0', () => {
-  it('returns true when composite is null (no data)', () => {
-    expect(shouldUsePhase0(null, null)).toBe(true)
+  it('returns false when composite is null (no data - use normal phase progression)', () => {
+    expect(shouldUsePhase0(null, null)).toBe(false)
   })
 
   it('returns true when composite < 50', () => {
@@ -138,13 +145,50 @@ describe('generateCalendar', () => {
     expect(testDayEvents[0].date).toBe('2026-09-01')
   })
 
-  it('places fractional tests (50% at ~10 weeks out, 75% at ~6 weeks out)', () => {
+  it('places fractional tests (50% at 8 weeks out, 75% at 4 weeks out)', () => {
     const cal = generateCalendar(baseDemographics, '2026-09-01', baseScores, '2026-03-22')
     const fracTests = collectEventsByType(cal, EVENT_TYPES.FRACTIONAL_TEST)
     // Should have two fractional tests (50% and 75%)
     expect(fracTests.length).toBe(2)
     const fractions = fracTests.map(ft => ft.fraction).sort()
     expect(fractions).toEqual([0.5, 0.75])
+
+    // 50% test: placed in the week where weeksToTarget===8 (week starting 2026-07-13)
+    // Training days Tue/Thu/Sat; idx=1 = Thu 2026-07-16
+    const test50 = fracTests.find(ft => ft.fraction === 0.5)
+    const test75 = fracTests.find(ft => ft.fraction === 0.75)
+    expect(test50.date >= '2026-07-13').toBe(true)
+    expect(test50.date <= '2026-07-18').toBe(true)
+
+    // 75% test: placed in the week where weeksToTarget===4 (week starting 2026-08-10)
+    // Training days Tue/Thu/Sat; idx=1 = Thu 2026-08-13
+    expect(test75.date >= '2026-08-10').toBe(true)
+    expect(test75.date <= '2026-08-15').toBe(true)
+  })
+
+  it('places BASELINE_PI events in the first week', () => {
+    // Use a Monday so the first week's training days (Tue/Thu/Sat) are in the future
+    const cal = generateCalendar(baseDemographics, '2026-09-01', baseScores, '2026-03-23')
+    const baselineEvents = collectEventsByType(cal, EVENT_TYPES.BASELINE_PI)
+    expect(baselineEvents.length).toBeGreaterThanOrEqual(2)
+    // Week 0 with Monday 2026-03-23: training days Tue Mar 24, Thu Mar 26, Sat Mar 28
+    for (const evt of baselineEvents) {
+      expect(evt.date >= '2026-03-23').toBe(true)
+      expect(evt.date <= '2026-03-29').toBe(true)
+    }
+  })
+
+  it('places FOUNDATION_CHECKIN events in the 4th week', () => {
+    // Phase 1 start + 3 weeks = week index 3
+    // firstMonday('2026-03-22') = '2026-03-16'; week 3 starts '2026-04-06'
+    // Training days: Tue Apr 7, Thu Apr 9, Sat Apr 11
+    const cal = generateCalendar(baseDemographics, '2026-09-01', baseScores, '2026-03-22')
+    const checkinEvents = collectEventsByType(cal, EVENT_TYPES.FOUNDATION_CHECKIN)
+    expect(checkinEvents.length).toBeGreaterThanOrEqual(2)
+    for (const evt of checkinEvents) {
+      expect(evt.date >= '2026-04-06').toBe(true)
+      expect(evt.date <= '2026-04-12').toBe(true)
+    }
   })
 
   it('generates PI workout events', () => {
