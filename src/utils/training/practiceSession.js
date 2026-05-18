@@ -17,6 +17,7 @@ import { EXERCISES } from '../scoring/constants.js'
 
 export const PI_EXERCISES = {
   PUSHUPS_30S:   'pushups_30s',
+  HRPU_30S:      'hrpu_30s',
   SITUPS_30S:    'situps_30s',
   CLRC_30S:      'clrc_30s',
   RUN_1MILE:     'run_1mile',
@@ -27,6 +28,7 @@ export const PI_EXERCISES = {
 
 export const PI_EXERCISE_LABELS = {
   [PI_EXERCISES.PUSHUPS_30S]:   'Push-ups (30 sec)',
+  [PI_EXERCISES.HRPU_30S]:      'Hand Release Push-ups (30 sec)',
   [PI_EXERCISES.SITUPS_30S]:    'Sit-ups (30 sec)',
   [PI_EXERCISES.CLRC_30S]:      'Reverse Crunches (30 sec)',
   [PI_EXERCISES.RUN_1MILE]:     '1-Mile Run',
@@ -38,6 +40,7 @@ export const PI_EXERCISE_LABELS = {
 // Maps each PI exercise to the full-test exercise it predicts
 export const PI_TO_FULL_EXERCISE = {
   [PI_EXERCISES.PUSHUPS_30S]:   EXERCISES.PUSHUPS,
+  [PI_EXERCISES.HRPU_30S]:      EXERCISES.HRPU,
   [PI_EXERCISES.SITUPS_30S]:    EXERCISES.SITUPS,
   [PI_EXERCISES.CLRC_30S]:      EXERCISES.CLRC,
   [PI_EXERCISES.RUN_1MILE]:     EXERCISES.RUN_2MILE,
@@ -49,6 +52,7 @@ export const PI_TO_FULL_EXERCISE = {
 // Whether each PI exercise value is time-based (seconds) or reps
 export const PI_IS_TIME = {
   [PI_EXERCISES.PUSHUPS_30S]:   false,
+  [PI_EXERCISES.HRPU_30S]:      false,
   [PI_EXERCISES.SITUPS_30S]:    false,
   [PI_EXERCISES.CLRC_30S]:      false,
   [PI_EXERCISES.RUN_1MILE]:     true,
@@ -79,6 +83,14 @@ export function scalePIWorkout(piExercise, value) {
         displayText: `Predicted 1-min push-up max: ~${value * 2} reps`,
         confidenceNote: '30-second count x2, +/- 3 reps',
         fullExercise: EXERCISES.PUSHUPS,
+      }
+
+    case PI_EXERCISES.HRPU_30S:
+      return {
+        predictedFullValue: value * 4,
+        displayText: `Predicted 2-min HRPU max: ~${value * 4} reps`,
+        confidenceNote: '30-second count x4, +/- 4 reps',
+        fullExercise: EXERCISES.HRPU,
       }
 
     case PI_EXERCISES.SITUPS_30S:
