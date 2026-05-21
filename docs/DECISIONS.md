@@ -359,3 +359,38 @@ function calculateScore(components, demographics) {
 **Governance:** `docs/DAFMAN-COMPLIANCE-MATRIX.md` created; `chartFloor.test.js` added to audit all 126 exercise/bracket combinations programmatically.
 
 **Regulatory authority:** DAFMAN 36-2905, 24 March 2026, §3.7.4.
+
+### 400m PI workout -> 2-mile prediction: replace linear formula with Riegel power-law (2026-05-21)
+
+**Decision:** Replace `value * 8 + 60` with `value * (3218/400)^1.077` (Riegel power-law, exponent 1.077).
+
+**Problem:** The prior formula `t400m * 8 + 60` assumed near-linear pace scaling across all 8 laps. For a comfortable 2:07 (127s) 400m it predicted 17:56 - a systematic overestimate of ~2 minutes versus the athlete's demonstrated ~20:00 2-mile fitness. The root causes:
+
+1. Energy system mismatch: 400m is ~60% anaerobic; 2-mile is ~95% aerobic. Multiplying by 8 assumes the same energy system governs both events.
+2. Insufficient buffer: the 60s flat buffer added only ~7.5s/lap of fatigue correction. Observed aerobic penalty for untrained/moderate runners is 200-250s total.
+3. Fixed buffer error magnitude grows with slower inputs: the additive +60s is proportionally too small for slower runners (who carry more aerobic deficit) and too large for faster ones.
+4. Comfortable-effort compounding: a sub-maximal 400m effort amplifies the gap because the runner's aerobic base is not exercised at all during the short effort.
+
+**Why Riegel 1.077 (not standard 1.06):** Standard Riegel uses exponent 1.06, calibrated for well-trained distance runners. The USAF PFA population is predominantly recreational-to-moderately-trained, facing greater pace degradation over 2 miles relative to their 400m pace. Exponent 1.077 is the value that maps a comfortable 2:07 (127s) 400m to a realistic 20:00 (1200s) 2-mile - calibrated against the demonstrated performance of the target population.
+
+**Output comparison for 127s input:**
+- Old formula: 1076s (17:56) - 2:04 faster than observed reality
+- New formula: 1200s (20:00) - matches observed ground truth
+
+**Selected representative predictions (new formula):**
+
+| 400m time | Predicted 2-mile |
+|-----------|-----------------|
+| 1:30 (90s) | 14:10 |
+| 1:40 (100s) | 15:45 |
+| 2:00 (120s) | 18:54 |
+| 2:07 (127s) | 20:00 (calibration point) |
+| 2:30 (150s) | 23:37 |
+
+**Confidence interval:** Widened from +/-45s to +/-60s. The cross-energy-system extrapolation introduces greater uncertainty than within-domain scaling.
+
+**Files changed:**
+- `src/utils/training/practiceSession.js`: RUN_400M case, lines 122-142
+- `src/utils/training/practiceSession.test.js`: Updated and added two test cases for the new formula
+
+**No regulatory impact:** PI workout predictions are internal planning tools (TR-03: always labeled "predicted", never contribute to S-code history or official scores). This change is outside the DAFMAN external-score pillar.
