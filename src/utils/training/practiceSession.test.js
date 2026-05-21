@@ -72,11 +72,17 @@ describe('scalePIWorkout - 1-mile run', () => {
 })
 
 describe('scalePIWorkout - 400m run', () => {
-  it('applies x8 + 60s fatigue buffer', () => {
-    // 2:00 = 120s per 400m
+  it('applies Riegel power-law (exponent 1.077) for recreational calibration', () => {
+    // 2:00 (120s) -> Riegel: 120 * (3218/400)^1.077 = 1134s = 18:54
     const result = scalePIWorkout(PI_EXERCISES.RUN_400M, 120)
-    expect(result.predictedFullValue).toBe(120 * 8 + 60) // 1020s = 17:00
+    expect(result.predictedFullValue).toBe(1134)
     expect(result.fullExercise).toBe(EXERCISES.RUN_2MILE)
+  })
+
+  it('maps calibration point: comfortable 2:07 -> ~20:00', () => {
+    // 2:07 (127s) comfortable -> Riegel 1.077 -> 1200s = 20:00
+    const result = scalePIWorkout(PI_EXERCISES.RUN_400M, 127)
+    expect(result.predictedFullValue).toBe(1200)
   })
 })
 
