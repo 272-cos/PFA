@@ -409,7 +409,9 @@ export function generateCalendar(demographics, targetDateISO, currentScores, tod
   let weekStart = firstMonday
   let weekIndex = 0
   let piCycleIndex = 0 // tracks which PI component to cycle to next
-  let baselinePlaced = 0 // counts how many baseline PI sessions have been placed (max 2)
+  // Pre-initialized from recorded sessions so already-done baselines are never re-scheduled.
+  let strengthBaselineDone = baselineScores.hasStrengthCore
+  let cardioBaselineDone   = baselineScores.hasCardio
 
   while (daysBetween(weekStart, targetDateISO) > 0) {
     const weekEnd      = addDays(weekStart, 6)
@@ -421,9 +423,8 @@ export function generateCalendar(demographics, targetDateISO, currentScores, tod
     const phaseForWeek = detectPhase(weeksToTarget, { forcePhase0: isPhase0, totalWeeks })
     const phaseName = isPhase0 ? null : getPhaseFromRatio(weekRatio, totalWeeks)
 
-    // Baseline PI: fires on first two future training days of the plan.
-    // Counter-based (not weekIndex/idx) so mid-week starts don't skip baselines.
-    const isBaselineWeek = baselinePlaced < 2 && totalWeeks >= 10 && !isPhase0
+    // Baseline PI: fires until both strength and cardio baselines are placed/recorded.
+    const isBaselineWeek = (!strengthBaselineDone || !cardioBaselineDone) && totalWeeks >= 10 && !isPhase0
 
     // Foundation check-in: at end of BASE phase (capped at weekIndex 3)
     const isFoundationCheckin = weekIndex === baseEndWeekIndex
@@ -457,9 +458,9 @@ export function generateCalendar(demographics, targetDateISO, currentScores, tod
       if (daysBetween(dayISO, targetDateISO) <= 0) return
 
       // ── Baseline: first two future training days ─────────────────────────
-      // Uses baselinePlaced counter so mid-week starts never skip baselines.
+      // Skipped per exercise if the user already has a recorded PI session for it.
       // Event content adapts to pfaPreferences (HRPU, Plank, HAMR variants).
-      if (isBaselineWeek && baselinePlaced === 0) {
+      if (isBaselineWeek && !strengthBaselineDone) {
         const bDef = getBaselineStrengthDef(pfaPreferences)
         addEvent(dayISO, {
           type:     EVENT_TYPES.BASELINE_PI,
@@ -470,10 +471,10 @@ export function generateCalendar(demographics, targetDateISO, currentScores, tod
           target:   bDef.target,
           priority: 'high',
         })
-        baselinePlaced++
+        strengthBaselineDone = true
         return
       }
-      if (isBaselineWeek && baselinePlaced === 1) {
+      if (isBaselineWeek && strengthBaselineDone && !cardioBaselineDone) {
         const bDef = getBaselineCardioDef(pfaPreferences)
         addEvent(dayISO, {
           type:     EVENT_TYPES.BASELINE_PI,
@@ -484,7 +485,7 @@ export function generateCalendar(demographics, targetDateISO, currentScores, tod
           target:   bDef.target,
           priority: 'high',
         })
-        baselinePlaced++
+        cardioBaselineDone = true
         return
       }
 
