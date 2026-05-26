@@ -591,12 +591,20 @@ export function generateCalendar(demographics, targetDateISO, currentScores, tod
 
         const piTarget = buildBeatTarget(piItem.exercise, baselineScores, rx.target)
 
+        // First 1-mile benchmark: user was only asked for 400m in the baseline,
+        // so add a one-time transition note explaining the distance change.
+        const isFirstMileBenchmark = piItem.exercise === EXERCISES.RUN_2MILE
+          && baselineScores.latest[PI_EXERCISES.RUN_1MILE] == null
+        const piNotes = isFirstMileBenchmark
+          ? `First 1-mile benchmark - this replaces your 400m baseline and gives a more accurate 2-mile prediction. Record your time today to unlock personal targets for future benchmarks. ${rx.notes}`
+          : rx.notes
+
         addEvent(dayISO, {
           type:        EVENT_TYPES.PI_WORKOUT,
           date:        dayISO,
           label:       `Quick Benchmark - ${rx.description}`,
           description: rx.description,
-          notes:       rx.notes,
+          notes:       piNotes,
           target:      piTarget,
           component:   piItem.component,
           exercise:    piItem.exercise,
