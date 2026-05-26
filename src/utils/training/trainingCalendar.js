@@ -409,7 +409,9 @@ export function generateCalendar(demographics, targetDateISO, currentScores, tod
   let weekStart = firstMonday
   let weekIndex = 0
   let piCycleIndex = 0 // tracks which PI component to cycle to next
-  let baselinePlaced = 0 // counts how many baseline PI sessions have been placed (max 2)
+  // Pre-initialized from recorded sessions so already-done baselines are never re-scheduled.
+  let strengthBaselineDone = baselineScores.hasStrengthCore
+  let cardioBaselineDone   = baselineScores.hasCardio
 
   while (daysBetween(weekStart, targetDateISO) > 0) {
     const weekEnd      = addDays(weekStart, 6)
@@ -421,9 +423,8 @@ export function generateCalendar(demographics, targetDateISO, currentScores, tod
     const phaseForWeek = detectPhase(weeksToTarget, { forcePhase0: isPhase0, totalWeeks })
     const phaseName = isPhase0 ? null : getPhaseFromRatio(weekRatio, totalWeeks)
 
-    // Baseline PI: fires on first two future training days of the plan.
-    // Counter-based (not weekIndex/idx) so mid-week starts don't skip baselines.
-    const isBaselineWeek = baselinePlaced < 2 && totalWeeks >= 10 && !isPhase0
+    // Baseline PI: fires until both strength and cardio baselines are placed/recorded.
+    const isBaselineWeek = (!strengthBaselineDone || !cardioBaselineDone) && totalWeeks >= 10 && !isPhase0
 
     // Foundation check-in: at end of BASE phase (capped at weekIndex 3)
     const isFoundationCheckin = weekIndex === baseEndWeekIndex
@@ -457,9 +458,9 @@ export function generateCalendar(demographics, targetDateISO, currentScores, tod
       if (daysBetween(dayISO, targetDateISO) <= 0) return
 
       // ── Baseline: first two future training days ─────────────────────────
-      // Uses baselinePlaced counter so mid-week starts never skip baselines.
+      // Skipped per exercise if the user already has a recorded PI session for it.
       // Event content adapts to pfaPreferences (HRPU, Plank, HAMR variants).
-      if (isBaselineWeek && baselinePlaced === 0) {
+      if (isBaselineWeek && !strengthBaselineDone) {
         const bDef = getBaselineStrengthDef(pfaPreferences)
         addEvent(dayISO, {
           type:     EVENT_TYPES.BASELINE_PI,
@@ -470,10 +471,10 @@ export function generateCalendar(demographics, targetDateISO, currentScores, tod
           target:   bDef.target,
           priority: 'high',
         })
-        baselinePlaced++
+        strengthBaselineDone = true
         return
       }
-      if (isBaselineWeek && baselinePlaced === 1) {
+      if (isBaselineWeek && strengthBaselineDone && !cardioBaselineDone) {
         const bDef = getBaselineCardioDef(pfaPreferences)
         addEvent(dayISO, {
           type:     EVENT_TYPES.BASELINE_PI,
@@ -484,7 +485,7 @@ export function generateCalendar(demographics, targetDateISO, currentScores, tod
           target:   bDef.target,
           priority: 'high',
         })
-        baselinePlaced++
+        cardioBaselineDone = true
         return
       }
 
@@ -591,12 +592,20 @@ export function generateCalendar(demographics, targetDateISO, currentScores, tod
 
         const piTarget = buildBeatTarget(piItem.exercise, baselineScores, rx.target)
 
+        // First 1-mile benchmark: user was only asked for 400m in the baseline,
+        // so add a one-time transition note explaining the distance change.
+        const isFirstMileBenchmark = piItem.exercise === EXERCISES.RUN_2MILE
+          && baselineScores.latest[PI_EXERCISES.RUN_1MILE] == null
+        const piNotes = isFirstMileBenchmark
+          ? `First 1-mile benchmark - this replaces your 400m baseline and gives a more accurate 2-mile prediction. Record your time today to unlock personal targets for future benchmarks. ${rx.notes}`
+          : rx.notes
+
         addEvent(dayISO, {
           type:        EVENT_TYPES.PI_WORKOUT,
           date:        dayISO,
           label:       `Quick Benchmark - ${rx.description}`,
           description: rx.description,
-          notes:       rx.notes,
+          notes:       piNotes,
           target:      piTarget,
           component:   piItem.component,
           exercise:    piItem.exercise,
@@ -728,14 +737,14 @@ export function generateCalendar(demographics, targetDateISO, currentScores, tod
 
 // ── PI score history extraction ──────────────────────────────────────────────
 
-// Reverse map: full-test EXERCISES constant -> preferred PI exercise key
-// When multiple PI exercises map to the same full exercise (e.g. run_400m and
-// run_1mile both map to RUN_2MILE), prefer the shorter benchmark variant.
+// Reverse map: full-test EXERCISES constant -> preferred PI exercise key.
+// Recurring quick benchmarks for the 2-mile run are always 1-mile efforts;
+// the 400m is only used in the Phase 0 baseline (separate code path).
 const EXERCISE_TO_PI = {
   [EXERCISES.PUSHUPS]:   PI_EXERCISES.PUSHUPS_30S,
   [EXERCISES.SITUPS]:    PI_EXERCISES.SITUPS_30S,
   [EXERCISES.CLRC]:      PI_EXERCISES.CLRC_30S,
-  [EXERCISES.RUN_2MILE]: PI_EXERCISES.RUN_400M,
+  [EXERCISES.RUN_2MILE]: PI_EXERCISES.RUN_1MILE,
   [EXERCISES.PLANK]:     PI_EXERCISES.PLANK_HALF,
   [EXERCISES.HAMR]:      PI_EXERCISES.HAMR_INTERVAL,
 }
