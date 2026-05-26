@@ -728,14 +728,14 @@ export function generateCalendar(demographics, targetDateISO, currentScores, tod
 
 // ── PI score history extraction ──────────────────────────────────────────────
 
-// Reverse map: full-test EXERCISES constant -> preferred PI exercise key
-// When multiple PI exercises map to the same full exercise (e.g. run_400m and
-// run_1mile both map to RUN_2MILE), prefer the shorter benchmark variant.
+// Reverse map: full-test EXERCISES constant -> preferred PI exercise key.
+// Recurring quick benchmarks for the 2-mile run are always 1-mile efforts;
+// the 400m is only used in the Phase 0 baseline (separate code path).
 const EXERCISE_TO_PI = {
   [EXERCISES.PUSHUPS]:   PI_EXERCISES.PUSHUPS_30S,
   [EXERCISES.SITUPS]:    PI_EXERCISES.SITUPS_30S,
   [EXERCISES.CLRC]:      PI_EXERCISES.CLRC_30S,
-  [EXERCISES.RUN_2MILE]: PI_EXERCISES.RUN_400M,
+  [EXERCISES.RUN_2MILE]: PI_EXERCISES.RUN_1MILE,
   [EXERCISES.PLANK]:     PI_EXERCISES.PLANK_HALF,
   [EXERCISES.HAMR]:      PI_EXERCISES.HAMR_INTERVAL,
 }
