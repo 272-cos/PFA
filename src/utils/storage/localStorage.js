@@ -378,6 +378,32 @@ export function toggleCompletedDay(dateISO) {
   return days.has(dateISO)
 }
 
+// ── Plan start date ──────────────────────────────────────────────────────────
+
+const PLAN_START_KEY = 'pfa_plan_start_date'
+
+/**
+ * Get the stored plan start date (ISO string), or null if never set.
+ * @returns {string|null}
+ */
+export function getPlanStartDate() {
+  try {
+    const val = localStorage.getItem(PLAN_START_KEY)
+    if (!val) return null
+    return /^\d{4}-\d{2}-\d{2}$/.test(val) ? val : null
+  } catch {
+    return null
+  }
+}
+
+/**
+ * Record the date the user started their training plan.
+ * @param {string} dateISO - ISO date string e.g. '2026-05-27'
+ */
+export function setPlanStartDate(dateISO) {
+  safeSetItem(PLAN_START_KEY, dateISO)
+}
+
 // ── Milestone overlay toggle ─────────────────────────────────────────────────
 
 const SHOW_MILESTONES_KEY = 'pfa_show_milestones'
