@@ -304,10 +304,16 @@ export function generateCalendar(demographics, targetDateISO, currentScores, tod
     preferredDays = DEFAULT_TRAINING_DAYS,
     adaptationState = null,
     pfaPreferences = null,
+    planStartISO = null,
   } = options
 
-  const totalDays = daysBetween(todayISO, targetDateISO)
-  const totalWeeks = weeksBetween(todayISO, targetDateISO)
+  // Calendar starts from the plan start date (or today for new plans).
+  // Using the full plan window lets past weeks display their prescriptions
+  // so users can look up workouts they missed.
+  const calendarStartISO = planStartISO && planStartISO <= todayISO ? planStartISO : todayISO
+
+  const totalDays = daysBetween(calendarStartISO, targetDateISO)
+  const totalWeeks = weeksBetween(calendarStartISO, targetDateISO)
 
   // Compute age for personalized heart rate zones
   const age = demographics?.dob ? calculateAge(demographics.dob, new Date()) : null
@@ -354,7 +360,7 @@ export function generateCalendar(demographics, targetDateISO, currentScores, tod
 
   // ── Mock test at -14 days (TR-01) ─────────────────────────────────────────
   const mockTestDate = addDays(targetDateISO, -14)
-  if (daysBetween(todayISO, mockTestDate) >= 0) {
+  if (daysBetween(calendarStartISO, mockTestDate) >= 0) {
     addEvent(mockTestDate, {
       type:        EVENT_TYPES.MOCK_TEST,
       date:        mockTestDate,
@@ -389,7 +395,7 @@ export function generateCalendar(demographics, targetDateISO, currentScores, tod
   const taperStart = addDays(targetDateISO, -14)
   for (const entry of TAPER_SCHEDULE) {
     const d = addDays(taperStart, entry.day)
-    if (daysBetween(todayISO, d) < 0) continue
+    if (daysBetween(calendarStartISO, d) < 0) continue
     if (isSameDay(d, targetDateISO)) continue
     addEvent(d, {
       type:        EVENT_TYPES.TAPER,
@@ -403,7 +409,7 @@ export function generateCalendar(demographics, targetDateISO, currentScores, tod
 
   // ── Build week-by-week schedule ───────────────────────────────────────────
 
-  const firstMonday = getMondayOfWeek(todayISO)
+  const firstMonday = getMondayOfWeek(calendarStartISO)
   const weeks = []
 
   let weekStart = firstMonday
@@ -451,8 +457,8 @@ export function generateCalendar(demographics, targetDateISO, currentScores, tod
     const trainingDays = getTrainingDaysForWeek(weekStart, preferredDays)
 
     trainingDays.forEach((dayISO, idx) => {
-      // Skip days before today
-      if (daysBetween(todayISO, dayISO) < 0) return
+      // Skip days before the calendar start (plan start or today)
+      if (daysBetween(calendarStartISO, dayISO) < 0) return
       // Skip taper days and days at/after test day
       if (daysBetween(dayISO, taperStart) <= 0) return
       if (daysBetween(dayISO, targetDateISO) <= 0) return

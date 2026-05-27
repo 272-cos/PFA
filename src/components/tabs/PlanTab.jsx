@@ -19,6 +19,8 @@ import {
   getOvertrainingAck,
   setOvertrainingAck,
   exportBackup,
+  getPlanStartDate,
+  setPlanStartDate,
 } from '../../utils/storage/localStorage.js'
 import ExercisePreferencePicker from '../shared/ExercisePreferencePicker.jsx'
 import PillGroup from '../shared/PillGroup.jsx'
@@ -512,6 +514,7 @@ export default function PlanTab() {
   const [pendingDays, setPendingDays] = useState(() => getPreferredDays())
   const [overtrainingAck, setOvertrainingAckState] = useState(() => getOvertrainingAck())
   const [showOvertrainingModal, setShowOvertrainingModal] = useState(false)
+  const [planStartDate, setPlanStartDateState] = useState(() => getPlanStartDate() || TODAY)
 
   const handlePrevMonth = () => {
     const p = prevMonth(viewYear, viewMonth)
@@ -556,6 +559,10 @@ export default function PlanTab() {
     }
     savePreferredDays(pendingDays)
     setPreferredDays(pendingDays)
+    if (!getPlanStartDate()) {
+      setPlanStartDate(TODAY)
+      setPlanStartDateState(TODAY)
+    }
     setSelectedDate(null)
     setCalendarKey(k => k + 1)
   }, [pendingDays, overtrainingAck])
@@ -566,6 +573,10 @@ export default function PlanTab() {
     setShowOvertrainingModal(false)
     savePreferredDays(pendingDays)
     setPreferredDays(pendingDays)
+    if (!getPlanStartDate()) {
+      setPlanStartDate(TODAY)
+      setPlanStartDateState(TODAY)
+    }
     setSelectedDate(null)
     setCalendarKey(k => k + 1)
   }, [pendingDays])
@@ -693,11 +704,11 @@ export default function PlanTab() {
       targetPfaDate,
       currentScores,
       TODAY,
-      { practiceSessionMap, preferredDays, adaptationState, pfaPreferences },
+      { practiceSessionMap, preferredDays, adaptationState, pfaPreferences, planStartISO: planStartDate },
     )
   // adaptationState.state is a string - memo recomputes only on state transitions.
   // pfaPreferences fields are primitives - memo recomputes when any selection changes.
-  }, [demographics, targetPfaDate, currentScores, practiceSessionMap, preferredDays, calendarKey, adaptationState.state, pfaPreferences?.upperBody, pfaPreferences?.core, pfaPreferences?.cardio])
+  }, [demographics, targetPfaDate, currentScores, practiceSessionMap, preferredDays, calendarKey, adaptationState.state, pfaPreferences?.upperBody, pfaPreferences?.core, pfaPreferences?.cardio, planStartDate])
 
   // ── Current phase info for header ─────────────────────────────────────────
   const currentPhaseInfo = useMemo(() => {
@@ -826,7 +837,7 @@ export default function PlanTab() {
   const phaseBannerColor = PHASE_BANNER_COLORS[calendar.startingPhase] || PHASE_BANNER_COLORS[PHASES.PHASE_1]
 
   // Bounds check: is the current view month within plan range?
-  const planStart   = TODAY
+  const planStart   = planStartDate
   const planEnd     = targetPfaDate
   const viewMonthISO = toISO(viewYear, viewMonth, 1)
   const viewEndISO   = toISO(viewYear, viewMonth, daysInMonth(viewYear, viewMonth))
